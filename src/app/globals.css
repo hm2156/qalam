@@ -1,26 +1,408 @@
+/* app/globals.css */
+
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  /* Apply Almarai font to body text (for subtext and body content) */
+  body {
+    font-family: var(--font-almarai), sans-serif;
+    font-style: normal;
+  }
+  
+  /* Apply Aref Ruqaa font to main titles */
+  h1, h2, h3, h4 {
+    font-family: var(--font-aref-ruqaa), serif;
+    font-weight: 700;
+  }
+  
+  /* Prevent input scrolling */
+  input[type="text"] {
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+  }
+  
+  /* RTL support for textareas */
+  textarea[dir="rtl"] {
+    text-align: right !important;
+    direction: rtl !important;
+    unicode-bidi: embed !important;
+  }
+  
+  textarea[lang="ar"] {
+    text-align: right !important;
+    direction: rtl !important;
+    font-family: var(--font-almarai), sans-serif;
+    unicode-bidi: embed !important;
+  }
+  
+  /* Force RTL for textarea content */
+  textarea[dir="rtl"]:focus,
+  textarea[lang="ar"]:focus {
+    text-align: right !important;
+    direction: rtl !important;
+    unicode-bidi: embed !important;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.ProseMirror {
+  /* Set a clean, readable font size for Arabic */
+  font-size: 1.125rem;
+  line-height: 1.75;
+  color: #000;
+  outline: none;
+  font-family: var(--font-almarai), sans-serif;
+}
+
+.ProseMirror:focus {
+  outline: none;
+}
+
+/* Editor headings should use Almarai, not Aref Ruqaa */
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror h4 {
+  font-family: var(--font-almarai), sans-serif;
+}
+
+.ProseMirror h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.ProseMirror h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.ProseMirror h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Blockquote styling */
+.ProseMirror blockquote {
+  font-family: var(--font-almarai), sans-serif;
+  font-size: 1.125rem;
+  font-style: italic;
+  color: #4a5568;
+  border-right: 4px solid #cbd5e0;
+  padding-right: 1rem;
+  margin: 1rem 0;
+}
+
+/* Code block styling */
+.ProseMirror pre {
+  background-color: #f7fafc;
+  border-radius: 0.375rem;
+  padding: 1rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+  font-family: 'Courier New', monospace;
+}
+
+.ProseMirror code {
+  background-color: #f7fafc;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: right;
+  color: #9ca3af;
+  pointer-events: none;
+  height: 0;
+}
+
+.ProseMirror .is-empty::before {
+  content: attr(data-placeholder);
+  float: right;
+  color: #9ca3af;
+  pointer-events: none;
+  height: 0;
+}
+
+/* Ensure all blocks within the RTL editor default to right alignment */
+.ProseMirror p,
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3 {
+  text-align: right;
+}
+
+/* List styling for RTL */
+.ProseMirror ul,
+.ProseMirror ol {
+  direction: rtl;
+  text-align: right;
+  padding-right: 2rem;
+  padding-left: 0;
+  margin-right: 0;
+  margin-left: auto;
+  list-style-position: outside;
+}
+
+/* Bullet list markers on the right */
+.ProseMirror ul {
+  list-style-type: disc;
+}
+
+.ProseMirror ul li {
+  display: list-item;
+  list-style-type: disc;
+  padding-right: 0.5rem;
+}
+
+/* Ordered list markers on the right */
+.ProseMirror ol {
+  list-style-type: decimal;
+}
+
+.ProseMirror ol li {
+  display: list-item;
+  list-style-type: decimal;
+  padding-right: 0.5rem;
+}
+
+/* Ensure list items are visible */
+.ProseMirror li {
+  display: list-item;
+  margin: 0.25rem 0;
+}
+
+/* Links styling */
+.ProseMirror a {
+  color: #2563eb;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ProseMirror a:hover {
+  color: #1e40af;
+}
+
+/* Image styling */
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  display: block;
+  margin-right: auto;
+  margin-left: auto;
+  cursor: pointer;
+}
+
+/* Images with width/height attributes will use them, but respect max-width */
+.ProseMirror img[width] {
+  max-width: 100%;
+  height: auto;
+}
+
+.ProseMirror img[height] {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Image alignment */
+.ProseMirror img[data-align="right"] {
+  display: block;
+  margin-right: 0;
+  margin-left: auto;
+}
+
+.ProseMirror img[data-align="center"] {
+  display: block;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.ProseMirror img[data-align="left"] {
+  display: block;
+  margin-right: auto;
+  margin-left: 0;
+}
+
+.ProseMirror img.resizable-image {
+  cursor: pointer;
+}
+
+.ProseMirror .image-resize-wrapper {
+  position: relative !important;
+  display: inline-block;
+  max-width: 100%;
+  margin: 1rem 0;
+}
+
+.ProseMirror .image-resize-wrapper:hover {
+  outline: 2px dashed #2563eb;
+  outline-offset: 4px;
+}
+
+.ProseMirror .resize-handle {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  background: transparent;
+  color: black;
+  font-size: 14px;
+  line-height: 1;
+  cursor: se-resize;
+  z-index: 1000 !important;
+  pointer-events: auto;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.ProseMirror .resize-handle:hover {
+  opacity: 0.7;
+}
+
+/* Fix for LTR paragraphs (e.g., if a user types English) */
+.ProseMirror p[data-text-align="left"],
+.ProseMirror h2[data-text-align="left"] {
+  text-align: left;
+}
+
+/* Article content styling */
+.article-content {
+  font-family: var(--font-almarai), sans-serif;
+  line-height: 1.8;
+  font-size: 1.125rem;
+  color: #1a1a1a;
+}
+
+.article-content h1,
+.article-content h2,
+.article-content h3,
+.article-content h4 {
+  font-family: var(--font-almarai), sans-serif;
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  text-align: right;
+  color: #000;
+}
+
+.article-content h1 {
+  font-size: 2rem;
+}
+
+.article-content h2 {
+  font-size: 1.5rem;
+}
+
+.article-content h3 {
+  font-size: 1.25rem;
+}
+
+.article-content p {
+  margin-bottom: 1.5rem;
+  text-align: right;
+  line-height: 1.8;
+}
+
+.article-content a {
+  color: #000;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.article-content a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.article-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 2rem 0;
+  display: block;
+}
+
+.article-content img[data-align="right"] {
+  margin-right: 0;
+  margin-left: auto;
+}
+
+.article-content img[data-align="center"] {
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.article-content img[data-align="left"] {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+/* Ensure lists are styled correctly for RTL */
+.article-content ul, 
+.article-content ol {
+  list-style-position: outside;
+  padding-right: 2rem; 
+  padding-left: 0;
+  margin-right: 0;
+  margin-left: auto;
+  margin-bottom: 1.5rem;
+}
+
+.article-content ul li {
+  list-style-type: disc;
+  margin-bottom: 0.75rem;
+  text-align: right;
+}
+
+.article-content ol li {
+  list-style-type: decimal;
+  margin-bottom: 0.75rem;
+  text-align: right;
+}
+
+.article-content blockquote {
+  border-right: 4px solid #e5e5e5;
+  padding-right: 1.5rem;
+  margin: 2rem 0;
+  font-style: italic;
+  color: #4a4a4a;
+  text-align: right;
+}
+
+.article-content code {
+  background-color: #f5f5f5;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+.article-content pre {
+  background-color: #f5f5f5;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+
+.article-content pre code {
+  background-color: transparent;
+  padding: 0;
 }
