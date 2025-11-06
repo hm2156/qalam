@@ -1,4 +1,4 @@
-// app/components/Header.tsx
+// app/components/Header.tsx (Responsiveness Fixed - Style Preserved)
 
 'use client';
 
@@ -34,35 +34,50 @@ export default function Header() {
   };
 
   return (
-    <header className=" p-4 m-4 ">
-      <div className="mx-auto flex max-w-7xl items-center">
-        {/* Logo/Site Title - Will naturally align to the right in RTL */}
-        <Link href={isLoggedIn ? "/home" : "/"} className="text-5xl font-bold text-black m-2" style={{ fontFamily: 'var(--font-aref-ruqaa), serif' }}>
+    <header className="p-4 mx-2"> {/* ⬅️ FIXED: Simplified margin for full width */}
+      <div className=" sm:mx-20 sm:mt-10 mx-auto flex max-w-7xl items-center">
+        
+        {/* Logo/Site Title */}
+        <Link 
+          href={isLoggedIn ? "/home" : "/"} 
+          // ⬅️ FIXED: Reduced logo size on mobile (text-3xl) and large size (sm:text-5xl)
+          className="text-3xl sm:text-5xl font-bold text-black m-2 flex-shrink-0" 
+          style={{ fontFamily: 'var(--font-aref-ruqaa), serif' }}
+        >
            قَلم
         </Link>
         
-        {/* Navigation - ml-auto pushes this to the left side in RTL */}
-        <nav className="mr-auto flex items-center gap-4">
-          <Link href="/explore" className="text-gray-600 hover:text-black">
+        {/* Navigation */}
+        <nav 
+          // ⬅️ FIXED: Added overflow-x-auto and whitespace-nowrap to prevent wrapping
+          // and allow horizontal scrolling on small screens.
+          className="mr-auto flex items-center gap-3 sm:gap-4 overflow-x-auto whitespace-nowrap px-2"
+        >
+          <Link href="/explore" className="text-sm sm:text-base text-gray-600 hover:text-black">
             اكتشف
           </Link>
           {isLoggedIn ? (
             <>
-              <Link href="/publish" className="text-gray-600 hover:text-black">
+              <Link href="/publish" className="text-sm sm:text-base text-gray-600 hover:text-black">
                 انشر
               </Link>
-              <Link href="/dashboard" className="text-gray-600 hover:text-black">
+              <Link href="/dashboard" className="text-sm sm:text-base text-gray-600 hover:text-black">
                 لوحة التحكم
               </Link>
               <button
                 onClick={handleLogout}
-                className="rounded-full bg-black px-4 py-1 text-white hover:bg-gray-800"
+                // ⬅️ FIXED: Reduced padding and font size for buttons on mobile
+                className="rounded-full bg-black px-3 py-1 text-xs sm:text-sm text-white hover:bg-gray-800 flex-shrink-0"
               >
                 تسجيل الخروج
               </button>
             </>
           ) : (
-            <Link href="/login" className="rounded-full bg-black px-4 py-1 text-white hover:bg-gray-800">
+            <Link 
+              href="/login" 
+              // ⬅️ FIXED: Reduced padding and font size for buttons on mobile
+              className="rounded-full bg-black px-3 py-1 text-xs sm:text-sm text-white hover:bg-gray-800 flex-shrink-0"
+            >
               تسجيل الدخول
             </Link>
           )}

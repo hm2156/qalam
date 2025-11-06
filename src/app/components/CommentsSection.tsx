@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase/client';
-import RTLTextarea from './RTLTextarea';
+import RTLContentEditable from './RTLContentEditable';
 
 interface CommentsSectionProps {
   articleId: number;
@@ -258,16 +258,15 @@ export default function CommentsSection({ articleId, userId: initialUserId, onCo
             {/* Edit form or content */}
             {isEditing && isOwner ? (
               <form onSubmit={(e) => handleUpdateComment(comment.id, e)} className="mb-2" dir="rtl">
-                <RTLTextarea
-                  key={`edit-${comment.id}`}
+                <RTLContentEditable
                   value={editContent}
-                  onChange={(e) => {
+                  onChange={(v) => {
                     const newEditContents = new Map(editContents);
-                    newEditContents.set(comment.id, e.target.value);
+                    newEditContents.set(comment.id, v);
                     setEditContents(newEditContents);
                   }}
-                  className="w-full border border-gray-300 rounded-lg p-3 text-sm resize-none focus:outline-none focus:border-black text-right"
-                  rows={3}
+                  placeholder="حرر تعليقك..."
+                  className="min-h-[4.5rem]"
                   autoFocus
                 />
                 <div className="flex gap-2 mt-2 justify-end">
@@ -293,7 +292,7 @@ export default function CommentsSection({ articleId, userId: initialUserId, onCo
                 </div>
               </form>
             ) : (
-              <p className="text-sm text-gray-700 mb-2 whitespace-pre-wrap break-words">{comment.content}</p>
+              <p className="text-sm text-gray-700 mb-2 whitespace-pre-wrap break-words" dir="rtl" lang="ar">{comment.content}</p>
             )}
 
             {/* Action buttons */}
@@ -347,17 +346,15 @@ export default function CommentsSection({ articleId, userId: initialUserId, onCo
             {/* Reply form */}
             {isReplying && userId && (
               <form onSubmit={(e) => handleReply(comment.id, e)} className="mt-3 mb-4" dir="rtl">
-                <RTLTextarea
-                  key={`reply-${comment.id}`}
+                <RTLContentEditable
                   value={replyContent}
-                  onChange={(e) => {
+                  onChange={(v) => {
                     const newReplyContents = new Map(replyContents);
-                    newReplyContents.set(comment.id, e.target.value);
+                    newReplyContents.set(comment.id, v);
                     setReplyContents(newReplyContents);
                   }}
                   placeholder="اكتب ردك..."
-                  className="w-full border border-gray-300 rounded-lg p-3 text-sm resize-none focus:outline-none focus:border-black text-right"
-                  rows={3}
+                  className="min-h-[6rem]"
                   autoFocus
                 />
                 <div className="flex gap-2 mt-2 justify-end">
@@ -407,12 +404,17 @@ export default function CommentsSection({ articleId, userId: initialUserId, onCo
       {/* Comment form */}
       {userId ? (
         <form onSubmit={handleSubmitComment} className="mb-8" dir="rtl">
-          <RTLTextarea
+          <RTLContentEditable
             value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
+            onChange={setNewComment}
+            onSubmit={() => {
+              // Ctrl/Cmd+Enter to submit
+              const fake = new Event('submit', { bubbles: true, cancelable: true }) as unknown as React.FormEvent;
+              handleSubmitComment(fake);
+            }}
             placeholder="اكتب تعليقك..."
-            className="w-full border border-gray-300 rounded-lg p-3 text-sm resize-none focus:outline-none focus:border-black text-right"
-            rows={4}
+            className="min-h-[6rem]"
+            autoFocus={false}
           />
           <button
             type="submit"
@@ -443,4 +445,3 @@ export default function CommentsSection({ articleId, userId: initialUserId, onCo
     </div>
   );
 }
-

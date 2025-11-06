@@ -25,26 +25,18 @@
     max-height: none !important;
   }
   
-  /* RTL support for textareas */
-  textarea[dir="rtl"] {
-    text-align: right !important;
+  /* Force RTL + proper bidi; component also sets inline style */
+  .rtl-ce {
     direction: rtl !important;
-    unicode-bidi: embed !important;
+    unicode-bidi: plaintext;
+    text-align: right;
   }
-  
-  textarea[lang="ar"] {
-    text-align: right !important;
-    direction: rtl !important;
-    font-family: var(--font-almarai), sans-serif;
-    unicode-bidi: embed !important;
-  }
-  
-  /* Force RTL for textarea content */
-  textarea[dir="rtl"]:focus,
-  textarea[lang="ar"]:focus {
-    text-align: right !important;
-    direction: rtl !important;
-    unicode-bidi: embed !important;
+
+  /* Placeholder for empty contenteditable */
+  .rtl-ce:empty:before {
+    content: attr(data-placeholder);
+    color: #9ca3af; /* Tailwind gray-400 */
+    pointer-events: none;
   }
 }
 
@@ -406,3 +398,4 @@
   background-color: transparent;
   padding: 0;
 }
+

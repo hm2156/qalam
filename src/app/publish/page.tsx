@@ -15,9 +15,52 @@ export default function PublishPage() {
   
   const [title, setTitle] = useState('');
   const [content, setContent] = useState(''); 
+  const [tag, setTag] = useState('general');
+  const [currentStatus, setCurrentStatus] = useState<'draft' | 'published' | 'archived'>('draft');
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoadingArticle, setIsLoadingArticle] = useState(false);
+
+  // Predefined tags in Arabic
+  const availableTags = [
+    'general',
+    'technology',
+    'science',
+    'culture',
+    'literature',
+    'philosophy',
+    'history',
+    'politics',
+    'society',
+    'art',
+    'education',
+    'health',
+    'business',
+    'travel',
+    'food',
+    'sports',
+    'entertainment',
+  ];
+
+  const tagLabels: Record<string, string> = {
+    general: 'عام',
+    technology: 'تقنية',
+    science: 'علوم',
+    culture: 'ثقافة',
+    literature: 'أدب',
+    philosophy: 'فلسفة',
+    history: 'تاريخ',
+    politics: 'سياسة',
+    society: 'مجتمع',
+    art: 'فن',
+    education: 'تعليم',
+    health: 'صحة',
+    business: 'أعمال',
+    travel: 'سفر',
+    food: 'طعام',
+    sports: 'رياضة',
+    entertainment: 'ترفيه',
+  };
 
   // Load article for editing
   useEffect(() => {
@@ -32,25 +75,63 @@ export default function PublishPage() {
         return;
       }
 
-      const { data: article, error } = await supabase
-        .from('articles')
-        .select('id, title, content, slug, status')
-        .eq('id', articleId)
-        .eq('author_id', session.user.id)
-        .single();
-
-      if (error) {
-        console.error('Error loading article:', error);
-        alert('حدث خطأ في تحميل المقالة.');
+      // Convert articleId to number if it's a string
+      const articleIdNum = parseInt(articleId, 10);
+      if (isNaN(articleIdNum)) {
+        console.error('Invalid article ID:', articleId);
+        alert('معرف المقالة غير صحيح.');
         router.push('/dashboard');
+        setIsLoadingArticle(false);
         return;
       }
 
-      if (article) {
-        setTitle(article.title);
-        setContent(article.content || '');
-        setIsEditing(true);
+      // Try to load the article - use maybeSingle to handle not found gracefully
+      // RLS policy allows users to view their own articles OR published articles
+      const { data: article, error } = await supabase
+        .from('articles')
+        .select('id, title, content, slug, status, tag, author_id')
+        .eq('id', articleIdNum)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error loading article:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        console.error('Article ID:', articleIdNum);
+        console.error('User ID:', session.user.id);
+        alert(`حدث خطأ في تحميل المقالة: ${error.message || 'خطأ غير معروف'}`);
+        router.push('/dashboard');
+        setIsLoadingArticle(false);
+        return;
       }
+
+      if (!article) {
+        console.error('Article not found');
+        console.error('Article ID:', articleIdNum);
+        console.error('User ID:', session.user.id);
+        alert('المقالة غير موجودة.');
+        router.push('/dashboard');
+        setIsLoadingArticle(false);
+        return;
+      }
+
+      // Security check: Ensure user owns the article
+      if (article.author_id !== session.user.id) {
+        console.error('Access denied: User does not own this article');
+        console.error('Article author ID:', article.author_id);
+        console.error('User ID:', session.user.id);
+        alert('ليس لديك صلاحية لتعديل هذه المقالة.');
+        router.push('/dashboard');
+        setIsLoadingArticle(false);
+        return;
+      }
+
+      setTitle(article.title);
+      setContent(article.content || '');
+      setTag(article.tag || 'general');
+      setCurrentStatus(article.status || 'draft');
+      setIsEditing(true);
       
       setIsLoadingArticle(false);
     };
@@ -89,13 +170,18 @@ export default function PublishPage() {
       return;
     }
 
+    // Ensure tag is set to 'general' if empty or not provided
+    const finalTag = !tag || tag.trim() === '' ? 'general' : tag.trim().toLowerCase();
+
     if (isEditing && articleId) {
-      // Update existing article
+      // Update existing article - preserve the current status
       const { error } = await supabase
         .from('articles')
         .update({
           title: title.trim(),
           content: content.trim(),
+          tag: finalTag,
+          status: currentStatus, // Preserve the original status
         })
         .eq('id', articleId)
         .eq('author_id', user.id);
@@ -135,7 +221,8 @@ export default function PublishPage() {
         title: title.trim(), 
         content: content.trim(),
         slug,
-        status: 'draft', 
+        status: 'draft',
+        tag: finalTag,
       };
 
       const { data, error } = await supabase
@@ -169,15 +256,37 @@ export default function PublishPage() {
           <p className="text-center mt-10">...جاري تحميل المقالة</p>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <input
-                type="text"
-                placeholder="عنوان المقالة..."
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full border-b border-gray-300 py-8 pb-8 text-4xl font-bold focus:border-black focus:outline-none placeholder:text-gray-400"
-                style={{ fontFamily: 'var(--font-aref-ruqaa), serif', lineHeight: '1.4' }}
-              />
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  placeholder="عنوان المقالة..."
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full border-b border-gray-300 py-8 pb-8 text-4xl font-bold focus:border-black focus:outline-none placeholder:text-gray-400"
+                  style={{ fontFamily: 'var(--font-aref-ruqaa), serif', lineHeight: '1.4' }}
+                />
+              </div>
+              
+              {/* Tag Selection - Moved to top right */}
+              <div className="md:mt-14">
+                <label htmlFor="tag" className="block text-sm font-medium text-gray-700 mb-2">
+                  التصنيف
+                </label>
+                <select
+                  id="tag"
+                  value={tag}
+                  onChange={(e) => setTag(e.target.value)}
+                  className="w-full md:w-48 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-black bg-white"
+                  dir="rtl"
+                >
+                  {availableTags.map((tagOption) => (
+                    <option key={tagOption} value={tagOption}>
+                      {tagLabels[tagOption] || tagOption}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="mt-8">

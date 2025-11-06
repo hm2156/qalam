@@ -54,7 +54,7 @@ export default function LoggedInHome() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-7xl px-8" dir="rtl">
+      <main className="mx-25 max-w-7xl px-8" dir="rtl">
         {/* Welcome Section */}
         <section className="py-20 md:py-32">
           <div className="max-w-5xl">
@@ -133,7 +133,7 @@ export default function LoggedInHome() {
       </main>
 
       {/* Footer (Simplified) */}
-      <footer className="py-12 border-t border-gray-200 mt-5">
+      <footer className="py-12 border-t border-gray-200 mt-5 mx-25">
         <div className="mx-auto max-w-7xl px-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-gray-600 text-sm">
             © 2024 قلم. جميع الحقوق محفوظة.
