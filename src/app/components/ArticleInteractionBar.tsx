@@ -162,7 +162,7 @@ export default function ArticleInteractionBar({ articleId, userId: initialUserId
   };
 
   return (
-    <div className="border-b border-gray-200 py-1.5 mb-4">
+    <div className="border-b border-gray-200 py-1.5 mb-4 sm:mb-6 sm: width-full">
       <div className="flex items-center justify-between">
         {/* Left side: Engagement metrics */}
         <div className="flex items-center gap-6">

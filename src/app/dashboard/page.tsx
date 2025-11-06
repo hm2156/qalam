@@ -277,9 +277,9 @@ export default function AuthorDashboard() {
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-4xl p-8" dir="rtl">
+      <main className="mx-2 px-4 sm:mx-20 sm:px-4 max-w-7xl py-4 sm:py-8 md:py-8" dir="rtl">
         <Header />
-        <p className="text-center mt-10">...جاري تحميل المقالات</p>
+        <p className="text-center mt-10 text-sm sm:text-base">...جاري تحميل المقالات</p>
       </main>
     );
   }
@@ -287,13 +287,13 @@ export default function AuthorDashboard() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-4xl p-8" dir="rtl">
-        <div className="flex justify-between items-center mb-8 border-b border-gray-200 pb-4">
-          <h1 className="text-3xl font-light" style={{ fontFamily: 'var(--font-aref-ruqaa), serif' }}>لوحة التحكم</h1>
+      <main className="mx-2 px-4 mb-5 sm:pt-15 sm:mx-23 sm:px-4 max-w-7xl py-4 sm:py-6 md:py-8" dir="rtl">
+        <div className="flex flex-row justify-between items-center gap-1 sm:gap-4 mb-6 sm:mb-8 border-b border-gray-200 pb-4">
+          <h1 className="text-2xl sm:text-4xl md:text-3xl font-light flex-shrink-0" style={{ fontFamily: 'var(--font-aref-ruqaa), serif' }}>لوحة التحكم</h1>
           {(activeTab === 'articles' || activeTab === 'saved') && activeTab === 'articles' && (
             <Link 
               href="/publish" 
-              className="rounded-full bg-black px-4 py-2 text-white hover:bg-gray-800 transition"
+              className="rounded-full bg-black px-3 sm:px-3 py-1.5 sm:py-2 text-white hover:bg-gray-800 transition text-xs sm:text-sm md:text-base whitespace-nowrap flex-shrink-0"
             >
               + انشر مقالة جديدة
             </Link>
@@ -301,10 +301,10 @@ export default function AuthorDashboard() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-4 mb-8 border-b border-gray-200">
+        <div className="flex gap-2 sm:gap-4 mb-6 sm:mb-8 border-b border-gray-200 overflow-x-auto">
           <button
             onClick={() => setActiveTab('settings')}
-            className={`pb-4 px-2 text-sm font-medium transition ${
+            className={`pb-4 px-2 sm:px-4 text-xs sm:text-sm font-medium transition whitespace-nowrap ${
               activeTab === 'settings' 
                 ? 'text-black border-b-2 border-black' 
                 : 'text-gray-500 hover:text-black'
@@ -314,7 +314,7 @@ export default function AuthorDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('articles')}
-            className={`pb-4 px-2 text-sm font-medium transition ${
+            className={`pb-4 px-2 sm:px-4 text-xs sm:text-sm font-medium transition whitespace-nowrap ${
               activeTab === 'articles' 
                 ? 'text-black border-b-2 border-black' 
                 : 'text-gray-500 hover:text-black'
@@ -324,7 +324,7 @@ export default function AuthorDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('saved')}
-            className={`pb-4 px-2 text-sm font-medium transition ${
+            className={`pb-4 px-2 sm:px-4 text-xs sm:text-sm font-medium transition whitespace-nowrap ${
               activeTab === 'saved' 
                 ? 'text-black border-b-2 border-black' 
                 : 'text-gray-500 hover:text-black'
@@ -336,23 +336,23 @@ export default function AuthorDashboard() {
 
         {/* Settings Tab */}
         {activeTab === 'settings' && (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <div>
-              <h2 className="text-xl font-semibold mb-4">الملف الشخصي</h2>
+              <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mb-4 sm:mb-6">الملف الشخصي</h2>
               
               {/* Profile Picture */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">الصورة الشخصية</label>
-                <div className="flex items-center gap-4">
-                  <div className="relative">
+              <div className="mb-4 sm:mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">الصورة الشخصية</label>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                  <div className="relative flex-shrink-0">
                     {avatarUrl ? (
                       <img 
                         src={avatarUrl} 
                         alt="Profile" 
-                        className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 border-gray-200"
                       />
                     ) : (
-                      <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-2xl">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-xl sm:text-2xl">
                         {displayName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?'}
                       </div>
                     )}
@@ -367,33 +367,33 @@ export default function AuthorDashboard() {
                     </label>
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm text-gray-500 mb-1">انقر على + لرفع صورة جديدة</p>
+                    <p className="text-xs sm:text-sm text-gray-500 mb-1">انقر على + لرفع صورة جديدة</p>
                     <p className="text-xs text-gray-400">PNG, JPG حتى 2MB</p>
                   </div>
                 </div>
               </div>
 
               {/* Display Name */}
-              <div className="mb-6">
+              <div className="mb-4 sm:mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">اسم العرض</label>
                 <input
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="أدخل اسم العرض"
-                  className="w-full border-b border-gray-300 pb-2 text-lg focus:border-black focus:outline-none"
+                  className="w-full border-b border-gray-300 pb-2 text-base sm:text-lg focus:border-black focus:outline-none"
                 />
                 <p className="text-xs text-gray-400 mt-1">الاسم الذي سيظهر على مقالاتك</p>
               </div>
 
               {/* Email (Read-only) */}
-              <div className="mb-6">
+              <div className="mb-4 sm:mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">البريد الإلكتروني</label>
                 <input
                   type="email"
                   value={user?.email || ''}
                   disabled
-                  className="w-full border-b border-gray-200 pb-2 text-lg text-gray-500 bg-gray-50 cursor-not-allowed"
+                  className="w-full border-b border-gray-200 pb-2 text-base sm:text-lg text-gray-500 bg-gray-50 cursor-not-allowed"
                 />
                 <p className="text-xs text-gray-400 mt-1">لا يمكن تغيير البريد الإلكتروني</p>
               </div>
@@ -402,7 +402,7 @@ export default function AuthorDashboard() {
               <button
                 onClick={handleSaveProfile}
                 disabled={saving}
-                className={`rounded-full px-6 py-2 text-white transition ${
+                className={`rounded-full px-4 sm:px-6 py-2 text-sm sm:text-base text-white transition w-full sm:w-auto ${
                   saving 
                     ? 'bg-gray-400 cursor-not-allowed' 
                     : 'bg-black hover:bg-gray-800'
@@ -418,16 +418,16 @@ export default function AuthorDashboard() {
         {activeTab === 'articles' && (
           <>
             {articles.length === 0 ? (
-              <p className="text-center text-gray-500 mt-10">لم تقم بكتابة أي مقالة بعد.</p>
+              <p className="text-center text-gray-500 mt-10 text-sm sm:text-base">لم تقم بكتابة أي مقالة بعد.</p>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {articles.map((article) => (
-                  <div key={article.id} className="p-6 border-b border-gray-200 flex justify-between items-start hover:bg-gray-50 transition-colors">
+                  <div key={article.id} className="p-4 sm:p-6 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4 hover:bg-gray-50 transition-colors">
                     
                     {/* Article Info */}
-                    <div className="flex-1">
-                      <h2 className="text-xl font-semibold mb-2 text-black">{article.title}</h2>
-                      <div className="flex items-center gap-3 text-sm text-gray-500">
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-lg sm:text-xl font-semibold mb-2 text-black break-words">{article.title}</h2>
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-500">
                         <span className={`px-2 py-1 rounded text-xs font-medium ${
                           article.status === 'published' 
                             ? 'bg-gray-100 text-gray-700' 
@@ -435,17 +435,17 @@ export default function AuthorDashboard() {
                         }`}>
                           {article.status === 'published' ? 'منشور' : 'مسودة'}
                         </span>
-                        <span>·</span>
+                        <span className="hidden sm:inline">·</span>
                         <span>{new Date(article.created_at).toLocaleDateString('ar-EG', { dateStyle: 'medium' })}</span>
                       </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2 mr-6 items-center">
+                    <div className="flex flex-wrap gap-2 sm:gap-2 sm:mr-6 sm:items-center">
                       {/* Edit Button - Always show for editing */}
                       <Link 
                         href={`/publish?id=${article.id}`}
-                        className="text-sm text-gray-600 hover:text-black px-3 py-1 rounded hover:bg-gray-100 transition"
+                        className="text-xs sm:text-sm text-gray-600 hover:text-black px-2 sm:px-3 py-1 rounded hover:bg-gray-100 transition whitespace-nowrap"
                       >
                         تعديل
                       </Link>
@@ -455,7 +455,7 @@ export default function AuthorDashboard() {
                         <Link 
                           href={`/article/${article.slug}`}
                           target="_blank"
-                          className="text-sm text-gray-600 hover:text-black px-3 py-1 rounded hover:bg-gray-100 transition"
+                          className="text-xs sm:text-sm text-gray-600 hover:text-black px-2 sm:px-3 py-1 rounded hover:bg-gray-100 transition whitespace-nowrap"
                         >
                           عرض
                         </Link>
@@ -465,14 +465,14 @@ export default function AuthorDashboard() {
                       {article.status === 'draft' ? (
                         <button
                           onClick={() => handleChangeStatus(article, 'published')}
-                          className="text-sm bg-black text-white px-3 py-1 rounded hover:bg-gray-800 transition"
+                          className="text-xs sm:text-sm bg-black text-white px-2 sm:px-3 py-1 rounded hover:bg-gray-800 transition whitespace-nowrap"
                         >
                           نشر المقالة
                         </button>
                       ) : (
                         <button
                           onClick={() => handleChangeStatus(article, 'draft')}
-                          className="text-sm bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300 transition"
+                          className="text-xs sm:text-sm bg-gray-200 text-gray-700 px-2 sm:px-3 py-1 rounded hover:bg-gray-300 transition whitespace-nowrap"
                         >
                           تحويل إلى مسودة
                         </button>
@@ -481,7 +481,7 @@ export default function AuthorDashboard() {
                       {/* Delete Button */}
                       <button
                         onClick={() => handleDeleteArticle(article)}
-                        className="text-sm text-red-600 hover:text-red-800 px-3 py-1 rounded hover:bg-red-50 transition"
+                        className="text-xs sm:text-sm text-red-600 hover:text-red-800 px-2 sm:px-3 py-1 rounded hover:bg-red-50 transition whitespace-nowrap"
                       >
                         حذف
                       </button>
@@ -497,35 +497,35 @@ export default function AuthorDashboard() {
         {activeTab === 'saved' && (
           <>
             {savedArticles.length === 0 ? (
-              <p className="text-center text-gray-500 mt-10">لم تقم بحفظ أي مقالة بعد.</p>
+              <p className="text-center text-gray-500 mt-10 text-sm sm:text-base">لم تقم بحفظ أي مقالة بعد.</p>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {savedArticles.map((article) => (
-                  <div key={article.id} className="p-6 border-b border-gray-200 flex justify-between items-start hover:bg-gray-50 transition-colors">
+                  <div key={article.id} className="p-4 sm:p-6 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4 hover:bg-gray-50 transition-colors">
                     
                     {/* Article Info */}
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <Link href={`/article/${article.slug}`}>
-                        <h2 className="text-xl font-semibold mb-2 text-black hover:text-gray-600 transition">
+                        <h2 className="text-lg sm:text-xl font-semibold mb-2 text-black hover:text-gray-600 transition break-words">
                           {article.title}
                         </h2>
                       </Link>
-                      <div className="flex items-center gap-3 text-sm text-gray-500">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-500">
                         <span className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700">
                           منشور
                         </span>
-                        <span>·</span>
+                        <span className="hidden sm:inline">·</span>
                         <span>{new Date(article.created_at).toLocaleDateString('ar-EG', { dateStyle: 'medium' })}</span>
                       </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2 mr-6 items-center">
+                    <div className="flex flex-wrap gap-2 sm:gap-2 sm:mr-6 sm:items-center">
                       {/* View Button */}
                       <Link 
                         href={`/article/${article.slug}`}
                         target="_blank"
-                        className="text-sm text-gray-600 hover:text-black px-3 py-1 rounded hover:bg-gray-100 transition"
+                        className="text-xs sm:text-sm text-gray-600 hover:text-black px-2 sm:px-3 py-1 rounded hover:bg-gray-100 transition whitespace-nowrap"
                       >
                         عرض
                       </Link>
@@ -533,7 +533,7 @@ export default function AuthorDashboard() {
                       {/* Remove Bookmark Button */}
                       <button
                         onClick={() => handleRemoveBookmark(article)}
-                        className="text-sm text-red-600 hover:text-red-800 px-3 py-1 rounded hover:bg-red-50 transition"
+                        className="text-xs sm:text-sm text-red-600 hover:text-red-800 px-2 sm:px-3 py-1 rounded hover:bg-red-50 transition whitespace-nowrap"
                         title="إزالة الحفظ"
                       >
                         إزالة الحفظ

@@ -249,7 +249,7 @@ export default function PublishPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-4xl p-8" dir="rtl">
+      <main className="mx-2 px-4 max-w-4xl sm:mx-22 sm:px-4 lg:max-w-7xl py-4 sm:py-6 md:py-8" dir="rtl">
         <h1 className="mb-8 text-3xl font-light">{isEditing ? 'تعديل المقالة' : 'اكتب مقالتك'}</h1>
 
         {isLoadingArticle ? (

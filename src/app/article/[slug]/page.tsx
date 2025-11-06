@@ -108,7 +108,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-3xl p-8" dir="rtl">
+      <main className="mx-2 px-4 max-w-3xl sm:mx-20 sm:px-4 lg:max-w-7xl py-4 sm:py-6 md:py-8" dir="rtl">
         
         {/* Article Header */}
         <h1 className="text-4xl md:text-5xl font-bold mb-6 text-black leading-tight" style={{ fontFamily: 'var(--font-aref-ruqaa), serif' }}>
