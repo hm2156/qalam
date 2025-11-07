@@ -1,6 +1,7 @@
 // app/article/[slug]/page.tsx
 
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import Header from '@/app/components/Header';
 import ArticleInteractionBar from '@/app/components/ArticleInteractionBar';
 import CommentsSection from '@/app/components/CommentsSection';
@@ -132,7 +133,9 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           
           {/* Author Info */}
           <div className="flex-1">
-            <p className="font-semibold text-black text-base">{authorName}</p>
+            <Link href={`/author/${finalArticle.author_id}`} className="font-semibold text-black text-base hover:text-gray-700 hover:underline inline-block">
+              {authorName}
+            </Link>
             <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
               <span>{new Date(finalArticle.created_at).toLocaleDateString('ar-EG', { dateStyle: 'long' })}</span>
               {finalArticle.reading_time && (

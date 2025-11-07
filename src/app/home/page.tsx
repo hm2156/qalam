@@ -54,7 +54,7 @@ export default function LoggedInHome() {
   return (
     <>
       <Header />
-      <main className="mx-25 max-w-7xl px-8" dir="rtl">
+      <main className="sm:mx-22 mx-18 max-w-7xl px-8" dir="rtl">
         {/* Welcome Section */}
         <section className="py-20 md:py-32">
           <div className="max-w-5xl">
@@ -77,20 +77,20 @@ export default function LoggedInHome() {
               {/* PRIMARY CTA */}
               <Link 
                 href="/publish" 
-                className="inline-flex items-center justify-center rounded bg-black px-6 py-2.5 text-white hover:bg-gray-800 transition-colors text-base font-medium"
+                className="inline-flex items-center justify-center rounded bg-black px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-2.5 text-sm sm:text-base text-white hover:bg-gray-800 transition-colors font-medium"
               >
                 ابدأ كتابة مقالة جديدة
               </Link>
               {/* Secondary CTAs */}
               <Link 
                 href="/dashboard" 
-                className="inline-flex items-center justify-center rounded border border-gray-300 px-6 py-2.5 text-black hover:border-black transition-colors text-base font-medium"
+                className="inline-flex items-center justify-center rounded border border-gray-300 px-4 py-2 sm:px-5 sm:py-2.5 md:px-2 md:py-1 text-sm sm:text-base text-black hover:border-black transition-colors font-medium"
               >
                 لوحة التحكم
               </Link>
               <Link 
                 href="/explore" 
-                className="inline-flex items-center justify-center rounded border border-gray-300 px-6 py-2.5 text-black hover:border-black transition-colors text-base font-medium"
+                className="inline-flex items-center justify-center rounded border border-gray-300 px-4 py-2 sm:px-5 sm:py-1.5 md:px-2 md:py-2.5 text-sm sm:text-base text-black hover:border-black transition-colors font-medium"
               >
                 استكشف المقالات
               </Link>

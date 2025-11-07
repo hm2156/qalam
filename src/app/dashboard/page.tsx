@@ -25,6 +25,11 @@ export default function AuthorDashboard() {
   const [user, setUser] = useState<any>(null);
   const [displayName, setDisplayName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [bio, setBio] = useState('');
+  const [twitterUrl, setTwitterUrl] = useState('');
+  const [linkedinUrl, setLinkedinUrl] = useState('');
+  const [websiteUrl, setWebsiteUrl] = useState('');
+  const [githubUrl, setGithubUrl] = useState('');
   const [saving, setSaving] = useState(false);
   const router = useRouter();
 
@@ -114,13 +119,18 @@ export default function AuthorDashboard() {
       // Load from profiles table
       const { data: profile } = await supabase
         .from('profiles')
-        .select('display_name, avatar_url')
+        .select('display_name, avatar_url, bio, twitter_url, linkedin_url, website_url, github_url')
         .eq('id', currentUser.id)
         .single();
       
       if (profile) {
         setDisplayName(profile.display_name || '');
         setAvatarUrl(profile.avatar_url || '');
+        setBio(profile.bio || '');
+        setTwitterUrl(profile.twitter_url || '');
+        setLinkedinUrl(profile.linkedin_url || '');
+        setWebsiteUrl(profile.website_url || '');
+        setGithubUrl(profile.github_url || '');
       } else {
         // Fallback to user metadata if profile doesn't exist
         setDisplayName(currentUser.user_metadata?.full_name || currentUser.user_metadata?.display_name || '');
@@ -160,7 +170,12 @@ export default function AuthorDashboard() {
           .upsert({
             id: user.id,
             avatar_url: base64,
-            display_name: displayName || user.user_metadata?.full_name || ''
+            display_name: displayName || user.user_metadata?.full_name || '',
+            bio: bio,
+            twitter_url: twitterUrl,
+            linkedin_url: linkedinUrl,
+            website_url: websiteUrl,
+            github_url: githubUrl
           });
 
         if (error) {
@@ -193,7 +208,12 @@ export default function AuthorDashboard() {
       .upsert({
         id: user.id,
         display_name: displayName,
-        avatar_url: avatarUrl || ''
+        avatar_url: avatarUrl || '',
+        bio: bio,
+        twitter_url: twitterUrl,
+        linkedin_url: linkedinUrl,
+        website_url: websiteUrl,
+        github_url: githubUrl
       });
 
     if (error) {
@@ -398,18 +418,87 @@ export default function AuthorDashboard() {
                 <p className="text-xs text-gray-400 mt-1">لا يمكن تغيير البريد الإلكتروني</p>
               </div>
 
-              {/* Save Button */}
-              <button
-                onClick={handleSaveProfile}
-                disabled={saving}
-                className={`rounded-full px-4 sm:px-6 py-2 text-sm sm:text-base text-white transition w-full sm:w-auto ${
-                  saving 
-                    ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-black hover:bg-gray-800'
-                }`}
-              >
-                {saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
-              </button>
+              {/* Bio */}
+              <div className="mb-4 sm:mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">نبذة عنك</label>
+                <textarea
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="اكتب نبذة قصيرة عنك..."
+                  rows={4}
+                  className="w-full border border-gray-300 rounded-lg p-3 text-base focus:border-black focus:outline-none resize-none"
+                />
+                <p className="text-xs text-gray-400 mt-1">ستظهر هذه النبذة في صفحتك الشخصية</p>
+              </div>
+
+              {/* Social Links */}
+              <div className="mb-4 sm:mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-3">روابط التواصل</label>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">Twitter</label>
+                    <input
+                      type="url"
+                      value={twitterUrl}
+                      onChange={(e) => setTwitterUrl(e.target.value)}
+                      placeholder="https://twitter.com/username"
+                      className="w-full border-b border-gray-300 pb-2 text-base focus:border-black focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">LinkedIn</label>
+                    <input
+                      type="url"
+                      value={linkedinUrl}
+                      onChange={(e) => setLinkedinUrl(e.target.value)}
+                      placeholder="https://linkedin.com/in/username"
+                      className="w-full border-b border-gray-300 pb-2 text-base focus:border-black focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">GitHub</label>
+                    <input
+                      type="url"
+                      value={githubUrl}
+                      onChange={(e) => setGithubUrl(e.target.value)}
+                      placeholder="https://github.com/username"
+                      className="w-full border-b border-gray-300 pb-2 text-base focus:border-black focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">الموقع الشخصي</label>
+                    <input
+                      type="url"
+                      value={websiteUrl}
+                      onChange={(e) => setWebsiteUrl(e.target.value)}
+                      placeholder="https://yourwebsite.com"
+                      className="w-full border-b border-gray-300 pb-2 text-base focus:border-black focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Preview and Save Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link
+                  href={`/author/${user?.id}`}
+                  target="_blank"
+                  className="rounded-full px-4 sm:px-6 py-2 text-sm sm:text-base border border-gray-300 hover:border-gray-400 text-center transition"
+                >
+                  معاينة الملف الشخصي
+                </Link>
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={saving}
+                  className={`rounded-full px-4 sm:px-6 py-2 text-sm sm:text-base text-white transition flex-1 sm:flex-initial ${
+                    saving 
+                      ? 'bg-gray-400 cursor-not-allowed' 
+                      : 'bg-black hover:bg-gray-800'
+                  }`}
+                >
+                  {saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+                </button>
+              </div>
             </div>
           </div>
         )}
