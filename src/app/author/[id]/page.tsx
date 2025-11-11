@@ -2,8 +2,8 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Header from '../../components/Header';
 import Link from 'next/link';
 import { supabase } from '../../../../lib/supabase/client';
@@ -23,16 +23,44 @@ interface Profile {
 
 export default function AuthorProfilePage() {
     const params = useParams();
+    const router = useRouter();
     const authorId = params.id as string;
     const [activeTab, setActiveTab] = useState<'home' | 'about'>('home');
     const [profile, setProfile] = useState<Profile | null>(null);
     const [articles, setArticles] = useState<ArticleWithAuthor[]>([]);
     const [loading, setLoading] = useState(true);
     const [joinDate, setJoinDate] = useState<string>('');
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const [isSelf, setIsSelf] = useState(false);
+    const [isFollowing, setIsFollowing] = useState(false);
+    const [notifyOnPublish, setNotifyOnPublish] = useState(false);
+    const [followActionLoading, setFollowActionLoading] = useState(false);
+    const [notifyToggleLoading, setNotifyToggleLoading] = useState(false);
 
     useEffect(() => {
         fetchProfile();
         fetchArticles();
+    }, [authorId]);
+
+    useEffect(() => {
+        const getCurrentUser = async () => {
+            try {
+                const { data } = await supabase.auth.getUser();
+                const userId = data?.user?.id ?? null;
+                setCurrentUserId(userId);
+                setIsSelf(userId === authorId);
+                if (userId && userId !== authorId) {
+                    await fetchFollowState(userId);
+                } else {
+                    setIsFollowing(false);
+                    setNotifyOnPublish(false);
+                }
+            } catch (error) {
+                console.error('Error fetching current user:', error);
+            }
+        };
+
+        getCurrentUser();
     }, [authorId]);
 
     const fetchProfile = async () => {
@@ -140,6 +168,119 @@ export default function AuthorProfilePage() {
         }
     };
 
+    const fetchFollowState = useCallback(async (userId: string) => {
+        try {
+            const { data, error } = await supabase
+                .from('profile_follows')
+                .select('notify_on_publish')
+                .eq('follower_id', userId)
+                .eq('author_id', authorId)
+                .maybeSingle();
+
+            if (error) {
+                // When no row, maybeSingle returns error 406 PGRST116
+                if (error.code !== 'PGRST116') {
+                    console.error('Error fetching follow state:', error);
+                }
+                setIsFollowing(false);
+                setNotifyOnPublish(false);
+                return;
+            }
+
+            if (data) {
+                setIsFollowing(true);
+                setNotifyOnPublish(Boolean(data.notify_on_publish));
+            } else {
+                setIsFollowing(false);
+                setNotifyOnPublish(false);
+            }
+        } catch (error) {
+            console.error('Error determining follow state:', error);
+        }
+    }, [authorId]);
+
+    const handleFollowToggle = async () => {
+        if (followActionLoading) return;
+        if (!authorId) return;
+
+        if (!currentUserId) {
+            router.push(`/login?redirect=/author/${authorId}`);
+            return;
+        }
+
+        if (isSelf) {
+            return;
+        }
+
+        setFollowActionLoading(true);
+        try {
+            if (isFollowing) {
+                const { error } = await supabase
+                    .from('profile_follows')
+                    .delete()
+                    .eq('follower_id', currentUserId)
+                    .eq('author_id', authorId);
+
+                if (error) throw error;
+
+                setIsFollowing(false);
+                setNotifyOnPublish(false);
+            } else {
+                const defaultNotify = true;
+                const { error } = await supabase
+                    .from('profile_follows')
+                    .upsert({
+                        follower_id: currentUserId,
+                        author_id: authorId,
+                        notify_on_publish: defaultNotify,
+                    });
+
+                if (error) throw error;
+
+                setIsFollowing(true);
+                setNotifyOnPublish(defaultNotify);
+
+                try {
+                    await supabase.from('notification_events').insert({
+                        event_type: 'follow',
+                        actor_id: currentUserId,
+                        recipient_id: authorId,
+                        payload: {},
+                    });
+                } catch (enqueueError) {
+                    console.error('Error enqueueing follow notification:', enqueueError);
+                }
+            }
+
+        } catch (error) {
+            console.error('Error updating follow status:', error);
+        } finally {
+            setFollowActionLoading(false);
+        }
+    };
+
+    const handleTogglePublishNotifications = async () => {
+        if (notifyToggleLoading || !isFollowing || !currentUserId) return;
+
+        const nextValue = !notifyOnPublish;
+        setNotifyToggleLoading(true);
+        try {
+            const { error } = await supabase
+                .from('profile_follows')
+                .update({ notify_on_publish: nextValue })
+                .eq('follower_id', currentUserId)
+                .eq('author_id', authorId);
+
+            if (error) throw error;
+
+            setNotifyOnPublish(nextValue);
+        } catch (error) {
+            console.error('Error updating publish notification preference:', error);
+        } finally {
+            setNotifyToggleLoading(false);
+        }
+    };
+
     if (loading && !profile) {
         return (
             <>
@@ -200,6 +341,44 @@ export default function AuthorProfilePage() {
                                         year: 'numeric'
                                     })}
                                 </p>
+                            )}
+                            {!isSelf && (
+                                <div className="mt-4 flex items-center gap-3 flex-wrap">
+                                    <button
+                                        type="button"
+                                        onClick={handleFollowToggle}
+                                        disabled={followActionLoading}
+                                        className={`px-5 py-2 rounded-full text-sm font-medium transition-colors border ${
+                                            isFollowing
+                                                ? 'bg-black text-white border-black hover:bg-gray-800'
+                                                : 'bg-white text-black border-gray-300 hover:border-black'
+                                        } disabled:opacity-60 disabled:cursor-not-allowed`}
+                                    >
+                                        {followActionLoading
+                                            ? 'جاري التحديث...'
+                                            : isFollowing
+                                                ? 'إلغاء المتابعة'
+                                                : 'تابع هذا الكاتب'}
+                                    </button>
+                                    {isFollowing && (
+                                        <button
+                                            type="button"
+                                            onClick={handleTogglePublishNotifications}
+                                            disabled={notifyToggleLoading}
+                                            className={`px-4 py-2 rounded-full text-sm transition-colors border ${
+                                                notifyOnPublish
+                                                    ? 'border-green-500 text-green-600 bg-green-50 hover:bg-green-100'
+                                                    : 'border-gray-300 text-gray-600 bg-white hover:border-gray-400'
+                                            } disabled:opacity-60 disabled:cursor-not-allowed`}
+                                        >
+                                            {notifyToggleLoading
+                                                ? 'جاري التحديث...'
+                                                : notifyOnPublish
+                                                    ? 'إيقاف تنبيهات النشر'
+                                                    : 'تفعيل تنبيهات النشر'}
+                                        </button>
+                                    )}
+                                </div>
                             )}
                         </div>
                     </div>

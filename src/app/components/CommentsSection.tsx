@@ -6,6 +6,9 @@ import RTLContentEditable from './RTLContentEditable';
 
 interface CommentsSectionProps {
   articleId: number;
+  articleTitle: string;
+  articleSlug: string;
+  articleAuthorId: string | null;
   userId: string | null;
   onCommentAdded?: () => void;
 }
@@ -24,7 +27,16 @@ interface Comment {
   replies?: Comment[];
 }
 
-export default function CommentsSection({ articleId, userId: initialUserId, onCommentAdded }: CommentsSectionProps) {
+const COMMENT_EXCERPT_LENGTH = 180;
+
+export default function CommentsSection({
+  articleId,
+  articleTitle,
+  articleSlug,
+  articleAuthorId,
+  userId: initialUserId,
+  onCommentAdded,
+}: CommentsSectionProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
@@ -35,6 +47,22 @@ export default function CommentsSection({ articleId, userId: initialUserId, onCo
   const [fetching, setFetching] = useState(true);
   const [userId, setUserId] = useState<string | null>(initialUserId || null);
 
+  const enqueueCommentNotification = async (payload: { comment_excerpt: string }) => {
+    if (!articleAuthorId || !userId || userId === articleAuthorId) return;
+
+    await supabase.from('notification_events').insert({
+      event_type: 'comment',
+      actor_id: userId,
+      recipient_id: articleAuthorId,
+      article_id: articleId,
+      payload: {
+        article_title: articleTitle,
+        article_slug: articleSlug,
+        ...payload,
+      },
+    });
+  };
+
   // Fetch user ID on client side (more reliable than server-side)
   useEffect(() => {
     const fetchUser = async () => {
@@ -42,12 +70,9 @@ export default function CommentsSection({ articleId, userId: initialUserId, onCo
       setUserId(user?.id || null);
     };
     fetchUser();
-    
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUserId(session?.user?.id || null);
     });
-    
     return () => subscription.unsubscribe();
   }, []);
 
@@ -57,8 +82,6 @@ export default function CommentsSection({ articleId, userId: initialUserId, onCo
 
   const fetchComments = async () => {
     setFetching(true);
-    
-    // Fetch all comments for this article
     const { data, error } = await supabase
       .from('comments')
       .select('id, content, created_at, updated_at, user_id, parent_id')
@@ -71,29 +94,25 @@ export default function CommentsSection({ articleId, userId: initialUserId, onCo
       return;
     }
 
-    // Fetch author profiles for all comments
     const userIds = [...new Set(data?.map(c => c.user_id) || [])];
     const { data: profiles } = await supabase
       .from('profiles')
       .select('id, display_name, avatar_url')
       .in('id', userIds);
 
-    const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+    const profilesMap = new Map<string, { display_name: string; avatar_url: string | null }>();
+    profiles?.forEach(profile => profilesMap.set(profile.id, profile));
 
-    // Organize comments into tree structure
     const commentsMap = new Map<number, Comment>();
     const topLevelComments: Comment[] = [];
 
     data?.forEach(comment => {
-      const author = profileMap.get(comment.user_id);
       const commentWithAuthor: Comment = {
         ...comment,
-        author: {
-          display_name: author?.display_name || 'مستخدم مجهول',
-          avatar_url: author?.avatar_url || null,
-        },
+        author: profilesMap.get(comment.user_id) || { display_name: 'مستخدم', avatar_url: null },
         replies: [],
       };
+
       commentsMap.set(comment.id, commentWithAuthor);
 
       if (comment.parent_id === null) {
@@ -117,14 +136,10 @@ export default function CommentsSection({ articleId, userId: initialUserId, onCo
 
     setLoading(true);
 
+    const content = newComment.trim();
     const { error } = await supabase
       .from('comments')
-      .insert([{
-        article_id: articleId,
-        user_id: userId,
-        content: newComment.trim(),
-        parent_id: null,
-      }]);
+      .insert([{ article_id: articleId, user_id: userId, content, parent_id: null }]);
 
     if (error) {
       console.error('Error submitting comment:', error);
@@ -132,9 +147,10 @@ export default function CommentsSection({ articleId, userId: initialUserId, onCo
     } else {
       setNewComment('');
       await fetchComments();
-      if (onCommentAdded) {
-        onCommentAdded();
-      }
+      if (onCommentAdded) onCommentAdded();
+      await enqueueCommentNotification({
+        comment_excerpt: content.slice(0, COMMENT_EXCERPT_LENGTH),
+      });
     }
 
     setLoading(false);
@@ -142,19 +158,14 @@ export default function CommentsSection({ articleId, userId: initialUserId, onCo
 
   const handleReply = async (parentId: number, e: React.FormEvent) => {
     e.preventDefault();
-    const replyContent = replyContents.get(parentId) || '';
-    if (!userId || !replyContent.trim()) return;
+    const replyContent = (replyContents.get(parentId) || '').trim();
+    if (!userId || !replyContent) return;
 
     setLoading(true);
 
     const { error } = await supabase
       .from('comments')
-      .insert([{
-        article_id: articleId,
-        user_id: userId,
-        content: replyContent.trim(),
-        parent_id: parentId,
-      }]);
+      .insert([{ article_id: articleId, user_id: userId, content: replyContent, parent_id: parentId }]);
 
     if (error) {
       console.error('Error submitting reply:', error);
@@ -165,9 +176,10 @@ export default function CommentsSection({ articleId, userId: initialUserId, onCo
       setReplyContents(newReplyContents);
       setReplyingTo(null);
       await fetchComments();
-      if (onCommentAdded) {
-        onCommentAdded();
-      }
+      if (onCommentAdded) onCommentAdded();
+      await enqueueCommentNotification({
+        comment_excerpt: replyContent.slice(0, COMMENT_EXCERPT_LENGTH),
+      });
     }
 
     setLoading(false);

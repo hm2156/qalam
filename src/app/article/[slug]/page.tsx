@@ -149,7 +149,13 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         </div>
 
         {/* Interactive Bar */}
-        <ArticleInteractionBar articleId={finalArticle.id} userId={userId} />
+        <ArticleInteractionBar
+          articleId={finalArticle.id}
+          articleTitle={finalArticle.title}
+          articleSlug={finalArticle.slug}
+          articleAuthorId={finalArticle.author_id}
+          userId={userId}
+        />
 
         {/* Article Content */}
         <article 
@@ -159,7 +165,13 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         />
         
         {/* Comments Section */}
-        <CommentsSection articleId={finalArticle.id} userId={userId} />
+        <CommentsSection
+          articleId={finalArticle.id}
+          articleTitle={finalArticle.title}
+          articleSlug={finalArticle.slug}
+          articleAuthorId={finalArticle.author_id}
+          userId={userId}
+        />
         
       </main>
     </>

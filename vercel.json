@@ -1,0 +1,8 @@
+{
+    "cron": [
+      {
+        "path": "/api/cron/notification-events?secret=7f3be0...",
+        "schedule": "*/10 * * * *"
+      }
+    ]
+  }

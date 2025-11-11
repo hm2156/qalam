@@ -35,7 +35,7 @@ export default function Header() {
 
   return (
     <header className="p-4 mx-2"> {/* ⬅️ FIXED: Simplified margin for full width */}
-      <div className=" sm:mx-20 sm:mt-10 mx-auto flex max-w-7xl items-center">
+      <div className="sm:mx-20 sm:mt-10 mx-auto flex max-w-7xl items-center gap-4">
         
         {/* Logo/Site Title */}
         <Link 
@@ -49,14 +49,12 @@ export default function Header() {
         
         {/* Navigation */}
         <nav 
-          // ⬅️ FIXED: Added overflow-x-auto and whitespace-nowrap to prevent wrapping
-          // and allow horizontal scrolling on small screens.
           className="mr-auto flex items-center gap-3 sm:gap-4 overflow-x-auto whitespace-nowrap px-2"
         >
           <Link href="/explore" className="text-sm sm:text-base text-gray-600 hover:text-black">
             اكتشف
           </Link>
-          {isLoggedIn ? (
+          {isLoggedIn && (
             <>
               <Link href="/publish" className="text-sm sm:text-base text-gray-600 hover:text-black">
                 انشر
@@ -64,24 +62,25 @@ export default function Header() {
               <Link href="/dashboard" className="text-sm sm:text-base text-gray-600 hover:text-black">
                 لوحة التحكم
               </Link>
-              <button
-                onClick={handleLogout}
-                // ⬅️ FIXED: Reduced padding and font size for buttons on mobile
-                className="rounded-full bg-black px-3 py-1 text-xs sm:text-sm text-white hover:bg-gray-800 flex-shrink-0"
-              >
-                تسجيل الخروج
-              </button>
             </>
-          ) : (
-            <Link 
-              href="/login" 
-              // ⬅️ FIXED: Reduced padding and font size for buttons on mobile
-              className="rounded-full bg-black px-3 py-1 text-xs sm:text-sm text-white hover:bg-gray-800 flex-shrink-0"
-            >
-              تسجيل الدخول
-            </Link>
           )}
         </nav>
+
+        {isLoggedIn ? (
+          <button
+            onClick={handleLogout}
+            className="rounded-full bg-black px-3 py-1 text-xs sm:text-sm text-white hover:bg-gray-800 flex-shrink-0"
+          >
+            تسجيل الخروج
+          </button>
+        ) : (
+          <Link 
+            href="/login" 
+            className="rounded-full bg-black px-3 py-1 text-xs sm:text-sm text-white hover:bg-gray-800 flex-shrink-0"
+          >
+            تسجيل الدخول
+          </Link>
+        )}
       </div>
     </header>
   );

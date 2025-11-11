@@ -63,6 +63,48 @@ export default function AuthorDashboard() {
     setLoading(false);
   }, [router]);
 
+  const enqueuePublishEvents = useCallback(async (article: Article) => {
+    if (!user) return;
+
+    try {
+      const { data: followers, error: followersError } = await supabase
+        .from('profile_follows')
+        .select('follower_id, notify_on_publish')
+        .eq('author_id', user.id)
+        .eq('notify_on_publish', true);
+
+      if (followersError) {
+        console.error('Error fetching followers for notifications:', followersError);
+        return;
+      }
+
+      if (!followers || followers.length === 0) {
+        return;
+      }
+
+      const events = followers.map(follower => ({
+        event_type: 'publish',
+        actor_id: user.id,
+        article_id: article.id,
+        recipient_id: follower.follower_id,
+        payload: {
+          article_title: article.title,
+          article_slug: article.slug,
+        },
+      }));
+
+      const { error: eventsError } = await supabase
+        .from('notification_events')
+        .insert(events);
+
+      if (eventsError) {
+        console.error('Error inserting notification events:', eventsError);
+      }
+    } catch (error) {
+      console.error('Unexpected error enqueueing publish events:', error);
+    }
+  }, [user]);
+
   // Fetch saved articles
   const fetchSavedArticles = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -237,6 +279,8 @@ export default function AuthorDashboard() {
       return;
     }
 
+    const wasPublished = article.status === 'published';
+
     const { error } = await supabase
       .from('articles')
       .update({ status: newStatus })
@@ -247,6 +291,25 @@ export default function AuthorDashboard() {
       alert('حدث خطأ أثناء تحديث حالة المقالة.');
     } else {
       alert(`تم تحديث حالة المقالة بنجاح إلى ${statusText}!`);
+      if (newStatus === 'published' && !wasPublished) {
+        await enqueuePublishEvents(article);
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          const accessToken = sessionData.session?.access_token;
+          const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+          if (accessToken) {
+            headers.Authorization = `Bearer ${accessToken}`;
+          } else {
+            console.warn('No access token available to trigger notification processor.');
+          }
+          await fetch('/api/notification-events/process', {
+            method: 'POST',
+            headers,
+          });
+        } catch (processError) {
+          console.error('Error triggering notification processor:', processError);
+        }
+      }
       fetchArticles();
     }
   };
@@ -357,6 +420,19 @@ export default function AuthorDashboard() {
         {/* Settings Tab */}
         {activeTab === 'settings' && (
           <div className="space-y-4 sm:space-y-6">
+            <div className="border border-gray-200 rounded-xl p-4 sm:p-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">إعدادات الإشعارات</h2>
+                <p className="text-sm text-gray-600">اضبط قنوات وأوقات وصول التنبيهات من قلم.</p>
+              </div>
+              <Link
+                href="/settings/notifications"
+                className="inline-flex items-center justify-center px-5 py-2 rounded-full bg-black text-white text-sm font-medium hover:bg-gray-800 transition whitespace-nowrap"
+              >
+                إدارة الإشعارات
+              </Link>
+            </div>
+
             <div>
               <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mb-4 sm:mb-6">الملف الشخصي</h2>
               
