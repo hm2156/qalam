@@ -1,8 +1,8 @@
 {
-    "cron": [
-      {
-        "path": "/api/cron/notification-events?secret=c839602567de7ab433aee5df763281dd.",
-        "schedule": "*/10 * * * *"
-      }
-    ]
-  }
+  "crons": [
+    {
+      "path": "/api/cron/notification-events?secret=7f3be0...",
+      "schedule": "*/10 * * * *"
+    }
+  ]
+}
