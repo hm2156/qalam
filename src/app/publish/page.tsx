@@ -16,7 +16,7 @@ export default function PublishPage() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState(''); 
   const [tag, setTag] = useState('general');
-  const [currentStatus, setCurrentStatus] = useState<'draft' | 'published' | 'archived'>('draft');
+  const [currentStatus, setCurrentStatus] = useState<'draft' | 'pending_review' | 'published' | 'archived' | 'rejected'>('draft'); 
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoadingArticle, setIsLoadingArticle] = useState(false);

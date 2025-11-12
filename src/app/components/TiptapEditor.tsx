@@ -12,6 +12,10 @@ import Image from '@tiptap/extension-image';
 import { Extension } from '@tiptap/core';
 import { useRef, useState, useEffect } from 'react';
 import { NodeSelection } from 'prosemirror-state';
+import { Table } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableHeader } from '@tiptap/extension-table-header';
+import { TableCell } from '@tiptap/extension-table-cell';
 
 // Custom Image Resize Extension
 const ImageResize = Extension.create({
@@ -70,11 +74,19 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
       bulletList: { keepAttributes: true },
       orderedList: { keepAttributes: true },
       blockquote: false, // We'll configure it separately
+      codeBlock: {
+         HTMLAttributes: {
+           class: 'code-block-editor',
+           dir: 'rtl',
+           translate: 'no',
+           spellcheck: 'false',
+         },
+       },
     }),
     
     // Crucial for RTL: Configure TextAlign to set 'right' as the default direction
     TextAlign.configure({
-      types: ['heading', 'paragraph', 'blockquote'],
+      types: ['heading', 'paragraph', 'blockquote', 'tableHeader', 'tableCell'],
       defaultAlignment: 'right', // Forces initial alignment to the right for Arabic
     }),
     
@@ -152,6 +164,25 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
     // Placeholder extension
     Placeholder.configure({
       placeholder: 'ابدأ الكتابة من هنا...',
+    }),
+
+    Table.configure({
+      resizable: true,
+      allowTableNodeSelection: true,
+      HTMLAttributes: {
+        class: 'table-auto border-collapse w-full my-6 text-right',
+      },
+    }),
+    TableRow,
+    TableHeader.configure({
+      HTMLAttributes: {
+        class: 'border border-gray-300 bg-gray-100 px-3 py-2 text-sm font-semibold align-middle',
+      },
+    }),
+    TableCell.configure({
+      HTMLAttributes: {
+        class: 'border border-gray-200 px-3 py-2 text-sm align-middle',
+      },
     }),
   ];
 
@@ -339,6 +370,23 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
   // Medium-style menu bar
   const MenuBar = () => {
     if (!editor) return null;
+ 
+    const sanitizeDimension = (value: string | null, fallback: number) => {
+      if (!value) return fallback;
+      const parsed = Number.parseInt(value, 10);
+      if (Number.isNaN(parsed) || parsed <= 0) {
+        return fallback;
+      }
+      return Math.min(parsed, 10);
+    };
+
+    const handleInsertTable = () => {
+      const rows = sanitizeDimension(window.prompt('كم عدد الصفوف؟', '3'), 3);
+      const cols = sanitizeDimension(window.prompt('كم عدد الأعمدة؟', '3'), 3);
+      editor.chain().focus().insertTable({ rows, cols, withHeaderRow: true }).run();
+    };
+ 
+    const isTableActive = editor.isActive('table');
 
     const setLink = () => {
       const previousUrl = editor.getAttributes('link').href;
@@ -655,6 +703,73 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
           onChange={handleFileUpload}
           className="hidden"
         />
+
+        <div className="w-px h-6 bg-gray-200 mx-1" />
+
+        {/* Table Controls */}
+        <button
+          onClick={handleInsertTable}
+          type="button"
+          className="py-2 px-3 text-sm rounded transition-colors text-gray-600 hover:bg-gray-100"
+          title="إدراج جدول"
+        >
+          ⌗ جدول
+        </button>
+        <button
+          onClick={() => editor.chain().focus().addRowAfter().run()}
+          type="button"
+          disabled={!isTableActive}
+          className={`py-2 px-3 text-sm rounded transition-colors ${
+            isTableActive ? 'text-gray-600 hover:bg-gray-100' : 'text-gray-300 cursor-not-allowed'
+          }`}
+          title="إضافة صف"
+        >
+          ⊕ صف
+        </button>
+        <button
+          onClick={() => editor.chain().focus().addColumnAfter().run()}
+          type="button"
+          disabled={!isTableActive}
+          className={`py-2 px-3 text-sm rounded transition-colors ${
+            isTableActive ? 'text-gray-600 hover:bg-gray-100' : 'text-gray-300 cursor-not-allowed'
+          }`}
+          title="إضافة عمود"
+        >
+          ⊕ عمود
+        </button>
+        <button
+          onClick={() => editor.chain().focus().deleteRow().run()}
+          type="button"
+          disabled={!isTableActive}
+          className={`py-2 px-3 text-sm rounded transition-colors ${
+            isTableActive ? 'text-gray-600 hover:bg-gray-100' : 'text-gray-300 cursor-not-allowed'
+          }`}
+          title="حذف الصف الحالي"
+        >
+          ⊖ صف
+        </button>
+        <button
+          onClick={() => editor.chain().focus().deleteColumn().run()}
+          type="button"
+          disabled={!isTableActive}
+          className={`py-2 px-3 text-sm rounded transition-colors ${
+            isTableActive ? 'text-gray-600 hover:bg-gray-100' : 'text-gray-300 cursor-not-allowed'
+          }`}
+          title="حذف العمود الحالي"
+        >
+          ⊖ عمود
+        </button>
+        <button
+          onClick={() => editor.chain().focus().deleteTable().run()}
+          type="button"
+          disabled={!isTableActive}
+          className={`py-2 px-3 text-sm rounded transition-colors ${
+            isTableActive ? 'text-red-500 hover:bg-red-50' : 'text-gray-300 cursor-not-allowed'
+          }`}
+          title="حذف الجدول"
+        >
+          🗑 جدول
+        </button>
       </div>
     );
   };

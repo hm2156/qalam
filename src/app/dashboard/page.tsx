@@ -14,15 +14,32 @@ interface Article {
   title: string;
   slug: string;
   created_at: string;
-  status: 'draft' | 'published' | 'archived';
+  status: 'draft' | 'pending_review' | 'published' | 'archived' | 'rejected';
+  review_submitted_at: string | null;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+  review_notes?: string | null;
+  author_display_name?: string | null;
+  content?: string | null;
 }
+
+interface PendingArticle extends Article {}
+
+const REVIEWER_EMAILS = (process.env.NEXT_PUBLIC_REVIEWER_EMAILS || '')
+  .split(',')
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean);
 
 export default function AuthorDashboard() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [savedArticles, setSavedArticles] = useState<Article[]>([]);
+  const [pendingArticles, setPendingArticles] = useState<PendingArticle[]>([]);
+  const [pendingNotes, setPendingNotes] = useState<Record<number, string>>({});
+  const [pendingExpanded, setPendingExpanded] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'articles' | 'settings' | 'saved'>('settings');
   const [user, setUser] = useState<any>(null);
+  const [isReviewer, setIsReviewer] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [bio, setBio] = useState('');
@@ -51,7 +68,7 @@ export default function AuthorDashboard() {
     // Fetch articles where author_id matches the current user's ID
     const { data, error } = await supabase
       .from('articles')
-      .select('id, title, slug, created_at, status')
+      .select('id, title, slug, created_at, status, review_submitted_at, reviewed_at, reviewed_by, review_notes')
       .eq('author_id', user.id) // IMPORTANT: Filter by current user
       .order('created_at', { ascending: false });
 
@@ -62,48 +79,6 @@ export default function AuthorDashboard() {
     }
     setLoading(false);
   }, [router]);
-
-  const enqueuePublishEvents = useCallback(async (article: Article) => {
-    if (!user) return;
-
-    try {
-      const { data: followers, error: followersError } = await supabase
-        .from('profile_follows')
-        .select('follower_id, notify_on_publish')
-        .eq('author_id', user.id)
-        .eq('notify_on_publish', true);
-
-      if (followersError) {
-        console.error('Error fetching followers for notifications:', followersError);
-        return;
-      }
-
-      if (!followers || followers.length === 0) {
-        return;
-      }
-
-      const events = followers.map(follower => ({
-        event_type: 'publish',
-        actor_id: user.id,
-        article_id: article.id,
-        recipient_id: follower.follower_id,
-        payload: {
-          article_title: article.title,
-          article_slug: article.slug,
-        },
-      }));
-
-      const { error: eventsError } = await supabase
-        .from('notification_events')
-        .insert(events);
-
-      if (eventsError) {
-        console.error('Error inserting notification events:', eventsError);
-      }
-    } catch (error) {
-      console.error('Unexpected error enqueueing publish events:', error);
-    }
-  }, [user]);
 
   // Fetch saved articles
   const fetchSavedArticles = useCallback(async () => {
@@ -134,7 +109,7 @@ export default function AuthorDashboard() {
     const articleIds = bookmarks.map(b => b.article_id);
     const { data: articlesData, error: articlesError } = await supabase
       .from('articles')
-      .select('id, title, slug, created_at, status')
+      .select('id, title, slug, created_at, status, review_submitted_at, reviewed_at, reviewed_by, review_notes')
       .in('id', articleIds)
       .eq('status', 'published')
       .order('created_at', { ascending: false });
@@ -146,17 +121,87 @@ export default function AuthorDashboard() {
     }
   }, []);
 
+  const fetchPendingArticles = useCallback(async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+
+    if (!accessToken || !isReviewer) {
+      setPendingArticles([]);
+      setPendingNotes({});
+      setPendingExpanded({});
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/articles/pending', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status !== 403) {
+          console.error('Failed to fetch pending articles', await response.text());
+        }
+        setPendingArticles([]);
+        return;
+      }
+
+      const result = await response.json();
+      const items = Array.isArray(result.items) ? result.items : [];
+
+      const mappedArticles: PendingArticle[] = items.map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        slug: item.slug,
+        created_at: item.created_at,
+        status: item.status,
+        review_submitted_at: item.review_submitted_at ?? null,
+        reviewed_at: null,
+        reviewed_by: null,
+        author_display_name: item.author_display_name ?? null,
+        content: item.content ?? null,
+        review_notes: item.review_notes ?? null,
+      }));
+
+      setPendingArticles(mappedArticles);
+      setPendingNotes(
+        mappedArticles.reduce<Record<number, string>>((acc, article) => {
+          acc[article.id] = article.review_notes ?? '';
+          return acc;
+        }, {})
+      );
+      setPendingExpanded({});
+    } catch (error) {
+      console.error('Unexpected error fetching pending articles:', error);
+      setPendingArticles([]);
+      setPendingNotes({});
+      setPendingExpanded({});
+    }
+  }, [isReviewer]);
+
   useEffect(() => {
     fetchArticles();
     fetchSavedArticles();
     loadUserProfile();
   }, [fetchArticles, fetchSavedArticles]);
 
+  useEffect(() => {
+     if (isReviewer) {
+       fetchPendingArticles();
+     } else {
+       setPendingArticles([]);
+       setPendingNotes({});
+       setPendingExpanded({});
+     }
+   }, [isReviewer, fetchPendingArticles]);
+
   // Load user profile data from profiles table
   const loadUserProfile = async () => {
     const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (currentUser) {
       setUser(currentUser);
+      setIsReviewer(REVIEWER_EMAILS.includes((currentUser.email || '').toLowerCase()));
       
       // Load from profiles table
       const { data: profile } = await supabase
@@ -269,50 +314,105 @@ export default function AuthorDashboard() {
     setSaving(false);
   };
 
+  const [reviewActionLoading, setReviewActionLoading] = useState<number | null>(null);
 
-  // ------------------------------------------
-  // Change Status Function
-  // ------------------------------------------
-  const handleChangeStatus = async (article: Article, newStatus: 'draft' | 'published' | 'archived') => {
-    const statusText = newStatus === 'published' ? 'منشور' : newStatus === 'draft' ? 'مسودة' : 'مؤرشف';
-    if (!confirm(`هل أنت متأكد من تغيير حالة المقالة "${article.title}" إلى ${statusText}؟`)) {
+  const triggerArticleAction = useCallback(async (
+    article: Article,
+    action: 'submit' | 'revert' | 'approve' | 'reject',
+    options?: { reviewNotes?: string }
+  ) => {
+    if (!user) {
+      alert('يجب تسجيل الدخول لتنفيذ هذا الإجراء.');
       return;
     }
 
-    const wasPublished = article.status === 'published';
+    setReviewActionLoading(article.id);
 
-    const { error } = await supabase
-      .from('articles')
-      .update({ status: newStatus })
-      .eq('id', article.id);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
 
-    if (error) {
-      console.error('Error updating status:', error);
-      alert('حدث خطأ أثناء تحديث حالة المقالة.');
-    } else {
-      alert(`تم تحديث حالة المقالة بنجاح إلى ${statusText}!`);
-      if (newStatus === 'published' && !wasPublished) {
-        await enqueuePublishEvents(article);
-        try {
-          const { data: sessionData } = await supabase.auth.getSession();
-          const accessToken = sessionData.session?.access_token;
-          const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-          if (accessToken) {
-            headers.Authorization = `Bearer ${accessToken}`;
-          } else {
-            console.warn('No access token available to trigger notification processor.');
-          }
-          await fetch('/api/notification-events/process', {
-            method: 'POST',
-            headers,
-          });
-        } catch (processError) {
-          console.error('Error triggering notification processor:', processError);
-        }
+      if (!accessToken) {
+        throw new Error('missing_session');
       }
-      fetchArticles();
+
+      const response = await fetch('/api/articles/review', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          articleId: article.id,
+          action,
+          reviewNotes: options?.reviewNotes ?? null,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'unknown_error');
+      }
+
+      const messages: Record<typeof action, string> = {
+        submit: 'تم إرسال المقالة للمراجعة.',
+        revert: 'تمت إعادة المقالة إلى المسودة.',
+        approve: 'تم اعتماد المقالة ونشرها.',
+        reject: 'تم رفض المقالة مع إرسال الملاحظات.',
+      };
+
+      alert(messages[action] || 'تم تنفيذ الإجراء بنجاح.');
+      await fetchArticles();
+      if (isReviewer) {
+        await fetchPendingArticles();
+      }
+    } catch (error) {
+      console.error('Error handling article workflow action:', error);
+      alert('حدث خطأ أثناء تنفيذ الإجراء. الرجاء المحاولة مرة أخرى.');
+    } finally {
+      setReviewActionLoading(null);
     }
-  };
+  }, [user, fetchArticles, isReviewer, fetchPendingArticles]);
+
+  const handlePendingNoteChange = useCallback((articleId: number, value: string) => {
+    setPendingNotes((prev) => ({ ...prev, [articleId]: value }));
+  }, []);
+
+  const togglePendingExpanded = useCallback((articleId: number) => {
+    setPendingExpanded((prev) => ({
+      ...prev,
+      [articleId]: !prev[articleId],
+    }));
+  }, []);
+
+  const handlePendingApprove = useCallback(
+    (article: PendingArticle) => {
+      const note = (pendingNotes[article.id] ?? '').trim();
+      triggerArticleAction(article, 'approve', { reviewNotes: note || undefined });
+    },
+    [pendingNotes, triggerArticleAction]
+  );
+
+  const handlePendingReject = useCallback(
+    (article: PendingArticle) => {
+      const note = (pendingNotes[article.id] ?? '').trim();
+      if (!note) {
+        alert('يرجى إضافة ملاحظات واضحة قبل رفض المقالة.');
+        return;
+      }
+      triggerArticleAction(article, 'reject', { reviewNotes: note });
+    },
+    [pendingNotes, triggerArticleAction]
+  );
+
+  const handlePendingRevert = useCallback(
+    (article: PendingArticle) => {
+      const note = (pendingNotes[article.id] ?? '').trim();
+      triggerArticleAction(article, 'revert', { reviewNotes: note || undefined });
+    },
+    [pendingNotes, triggerArticleAction]
+  );
 
   // ------------------------------------------
   // Delete Article Function
@@ -582,6 +682,117 @@ export default function AuthorDashboard() {
         {/* Articles Tab */}
         {activeTab === 'articles' && (
           <>
+            {isReviewer && (
+              <section className="mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg sm:text-xl font-semibold text-black">المقالات بانتظار المراجعة</h2>
+                  <span className="text-xs sm:text-sm text-gray-500">
+                    {pendingArticles.length} مقالة
+                  </span>
+                </div>
+                {pendingArticles.length === 0 ? (
+                   <p className="text-sm text-gray-500">لا توجد مقالات بانتظار المراجعة حالياً.</p>
+                 ) : (
+                   <div className="space-y-3 sm:space-y-4">
+                     {pendingArticles.map((article) => (
+                      <div
+                        key={`pending-${article.id}`}
+                        className="p-4 sm:p-6 border border-amber-200 rounded-lg bg-white shadow-sm flex flex-col gap-4"
+                      >
+                        <div className="flex flex-col gap-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded-full">قيد المراجعة</span>
+                            {article.review_submitted_at && (
+                              <span className="text-xs text-gray-500">
+                                منذ {new Date(article.review_submitted_at).toLocaleDateString('ar-EG', { dateStyle: 'medium' })}
+                              </span>
+                            )}
+                          </div>
+                          <div className="space-y-1">
+                            <h3 className="text-base sm:text-lg font-semibold text-black">{article.title}</h3>
+                            <p className="text-xs sm:text-sm text-gray-500">
+                              الكاتب: {article.author_display_name ?? 'كاتب مجهول'}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => togglePendingExpanded(article.id)}
+                              className="text-xs sm:text-sm text-gray-600 hover:text-black px-2 py-1 rounded hover:bg-gray-100 transition"
+                            >
+                              {pendingExpanded[article.id] ? 'إخفاء المحتوى' : 'عرض المحتوى' }
+                            </button>
+                           </div>
+                          {pendingExpanded[article.id] && (
+                            <div className="border border-gray-200 rounded-lg bg-gray-50 p-4 max-h-[420px] overflow-y-auto">
+                              {article.content ? (
+                                <article
+                                  className="article-content text-sm"
+                                  dir="rtl"
+                                  dangerouslySetInnerHTML={{ __html: article.content }}
+                                />
+                              ) : (
+                                <p className="text-sm text-gray-500">لا يوجد محتوى للعرض.</p>
+                              )}
+                            </div>
+                          )}
+                          <div className="flex flex-col gap-2">
+                            <label className="text-xs sm:text-sm text-gray-600">ملاحظات المراجعة</label>
+                            <textarea
+                              value={pendingNotes[article.id] ?? ''}
+                              onChange={(event) => handlePendingNoteChange(article.id, event.target.value)}
+                              rows={4}
+                              className="w-full border border-gray-200 rounded-lg p-3 text-xs sm:text-sm focus:border-black focus:outline-none resize-y"
+                              placeholder="اكتب ملاحظات واضحة تساعد الكاتب على تحسين المقالة قبل النشر..."
+                            />
+                            <p className="text-xs text-gray-400">الملاحظات مطلوبة عند رفض المقالة.</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap sm:flex-nowrap gap-2 sm:justify-end sm:items-center">
+                          {reviewActionLoading === article.id && (
+                            <span className="text-xs text-gray-400">...جارٍ التنفيذ</span>
+                          )}
+                          <button
+                            onClick={() => handlePendingApprove(article)}
+                            disabled={reviewActionLoading === article.id}
+                            className={`text-xs sm:text-sm px-3 py-1.5 rounded transition whitespace-nowrap ${
+                              reviewActionLoading === article.id
+                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                : 'bg-green-600 text-white hover:bg-green-700'
+                            }`}
+                          >
+                            اعتماد ونشر
+                          </button>
+                          <button
+                            onClick={() => handlePendingReject(article)}
+                            disabled={reviewActionLoading === article.id}
+                            className={`text-xs sm:text-sm px-3 py-1.5 rounded transition whitespace-nowrap ${
+                              reviewActionLoading === article.id
+                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                : 'bg-red-600 text-white hover:bg-red-700'
+                            }`}
+                          >
+                            رفض مع ملاحظات
+                          </button>
+                          <button
+                            onClick={() => handlePendingRevert(article)}
+                            disabled={reviewActionLoading === article.id}
+                            className={`text-xs sm:text-sm px-3 py-1.5 rounded transition whitespace-nowrap ${
+                              reviewActionLoading === article.id
+                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                            }`}
+                          >
+                            إرجاع للمسودة
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
             {articles.length === 0 ? (
               <p className="text-center text-gray-500 mt-10 text-sm sm:text-base">لم تقم بكتابة أي مقالة بعد.</p>
             ) : (
@@ -593,15 +804,28 @@ export default function AuthorDashboard() {
                     <div className="flex-1 min-w-0">
                       <h2 className="text-lg sm:text-xl font-semibold mb-2 text-black break-words">{article.title}</h2>
                       <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-500">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          article.status === 'published' 
-                            ? 'bg-gray-100 text-gray-700' 
-                            : 'bg-gray-200 text-gray-600'
-                        }`}>
-                          {article.status === 'published' ? 'منشور' : 'مسودة'}
+                        {(() => {
+                          const statusMeta: Record<Article['status'], { label: string; className: string }> = {
+                            draft: { label: 'مسودة', className: 'bg-gray-200 text-gray-600' },
+                            pending_review: { label: 'قيد المراجعة', className: 'bg-amber-100 text-amber-700' },
+                            published: { label: 'منشور', className: 'bg-gray-100 text-gray-700' },
+                            archived: { label: 'مؤرشف', className: 'bg-gray-300 text-gray-700' },
+                            rejected: { label: 'مرفوض', className: 'bg-red-100 text-red-700' },
+                          };
+                          const meta = statusMeta[article.status];
+                          return (
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${meta.className}`}>
+                              {meta.label}
                         </span>
+                          );
+                        })()}
                         <span className="hidden sm:inline">·</span>
                         <span>{new Date(article.created_at).toLocaleDateString('ar-EG', { dateStyle: 'medium' })}</span>
+                        {article.status === 'pending_review' && article.review_submitted_at && (
+                          <span className="text-gray-400 whitespace-nowrap">
+                            (منذ {new Date(article.review_submitted_at).toLocaleDateString('ar-EG', { dateStyle: 'medium' })})
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -626,20 +850,76 @@ export default function AuthorDashboard() {
                         </Link>
                       )}
                       
-                      {/* Publish/Draft Toggle Button */}
-                      {article.status === 'draft' ? (
+                      {/* Submit for review / approval actions */}
+                      {(article.status === 'draft' || article.status === 'rejected') && (
+                        <>
+                          <button
+                            onClick={() => triggerArticleAction(article, 'submit')}
+                            disabled={reviewActionLoading === article.id}
+                            className={`text-xs sm:text-sm px-2 sm:px-3 py-1 rounded transition whitespace-nowrap ${
+                              reviewActionLoading === article.id
+                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                : 'bg-black text-white hover:bg-gray-800'
+                            }`}
+                          >
+                            {article.status === 'draft' ? 'إرسال للمراجعة' : 'إعادة الإرسال بعد التعديل'}
+                          </button>
+                          {isReviewer && (
+                            <button
+                              onClick={() => triggerArticleAction(article, 'approve')}
+                              disabled={reviewActionLoading === article.id}
+                              className={`text-xs sm:text-sm px-2 sm:px-3 py-1 rounded transition whitespace-nowrap ${
+                                reviewActionLoading === article.id
+                                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                  : 'bg-gray-800 text-white hover:bg-black'
+                              }`}
+                            >
+                              نشر فوري
+                            </button>
+                          )}
+                        </>
+                      )}
+
+                      {article.status === 'pending_review' && (
+                        <>
+                          {isReviewer && (
+                            <button
+                              onClick={() => triggerArticleAction(article, 'approve')}
+                              disabled={reviewActionLoading === article.id}
+                              className={`text-xs sm:text-sm px-2 sm:px-3 py-1 rounded transition whitespace-nowrap ${
+                                reviewActionLoading === article.id
+                                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                  : 'bg-green-600 text-white hover:bg-green-700'
+                              }`}
+                            >
+                              اعتماد ونشر
+                            </button>
+                          )}
                         <button
-                          onClick={() => handleChangeStatus(article, 'published')}
-                          className="text-xs sm:text-sm bg-black text-white px-2 sm:px-3 py-1 rounded hover:bg-gray-800 transition whitespace-nowrap"
-                        >
-                          نشر المقالة
+                            onClick={() => triggerArticleAction(article, 'revert')}
+                            disabled={reviewActionLoading === article.id}
+                            className={`text-xs sm:text-sm px-2 sm:px-3 py-1 rounded transition whitespace-nowrap ${
+                              reviewActionLoading === article.id
+                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                            }`}
+                          >
+                            إرجاع لمسودة
                         </button>
-                      ) : (
+                        </>
+                      )}
+
+                      {article.status === 'published' && isReviewer && (
                         <button
-                          onClick={() => handleChangeStatus(article, 'draft')}
-                          className="text-xs sm:text-sm bg-gray-200 text-gray-700 px-2 sm:px-3 py-1 rounded hover:bg-gray-300 transition whitespace-nowrap"
+                          onClick={() => triggerArticleAction(article, 'revert')}
+                          disabled={reviewActionLoading === article.id}
+                          className={`text-xs sm:text-sm px-2 sm:px-3 py-1 rounded transition whitespace-nowrap ${
+                            reviewActionLoading === article.id
+                              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                          }`}
                         >
-                          تحويل إلى مسودة
+                          إعادة للمسودة
                         </button>
                       )}
                       
@@ -651,6 +931,12 @@ export default function AuthorDashboard() {
                         حذف
                       </button>
                     </div>
+                    {article.status === 'rejected' && article.review_notes && (
+                      <div className="mt-3 sm:mt-4 bg-red-50 border border-red-100 rounded-lg p-3 text-xs sm:text-sm text-red-700 leading-relaxed whitespace-pre-wrap">
+                        <strong className="block mb-1">ملاحظات المحرر:</strong>
+                        {article.review_notes}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -676,11 +962,28 @@ export default function AuthorDashboard() {
                         </h2>
                       </Link>
                       <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-500">
-                        <span className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700">
-                          منشور
+                        {(() => {
+                          const statusMeta: Record<Article['status'], { label: string; className: string }> = {
+                            draft: { label: 'مسودة', className: 'bg-gray-200 text-gray-600' },
+                            pending_review: { label: 'قيد المراجعة', className: 'bg-amber-100 text-amber-700' },
+                            published: { label: 'منشور', className: 'bg-gray-100 text-gray-700' },
+                            archived: { label: 'مؤرشف', className: 'bg-gray-300 text-gray-700' },
+                            rejected: { label: 'مرفوض', className: 'bg-red-100 text-red-700' },
+                          };
+                          const meta = statusMeta[article.status];
+                          return (
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${meta.className}`}>
+                              {meta.label}
                         </span>
+                          );
+                        })()}
                         <span className="hidden sm:inline">·</span>
                         <span>{new Date(article.created_at).toLocaleDateString('ar-EG', { dateStyle: 'medium' })}</span>
+                        {article.status === 'pending_review' && article.review_submitted_at && (
+                          <span className="text-gray-400 whitespace-nowrap">
+                            (منذ {new Date(article.review_submitted_at).toLocaleDateString('ar-EG', { dateStyle: 'medium' })})
+                          </span>
+                        )}
                       </div>
                     </div>
 

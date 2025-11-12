@@ -21,8 +21,8 @@ const almarai = Almarai({
 });
 
 export const metadata: Metadata = {
-  title: 'قلم | Qalam - Arabic Content Platform',
-  description: 'A simple, elegant Arabic blogging platform.',
+  title: 'قلم | Qalam',
+  description: 'A simple Arabic blogging platform.',
 };
 
 export default function RootLayout({

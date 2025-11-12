@@ -32,8 +32,8 @@ const COLORS = {
 };
 
 const FONTS = {
-  serif: "'Aref Ruqaa', 'Arabic Typesetting', 'Traditional Arabic', Georgia, serif",
-  sans: "'Almarai', 'Segoe UI', Tahoma, Arial, sans-serif",
+  serif: "'Aref Ruqaa', 'Scheherazade New', 'Arabic Typesetting', 'Traditional Arabic', Georgia, serif",
+  sans: "'Almarai', 'Cairo', 'Noto Sans Arabic', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
 };
 
 async function getRecipientContact(profileId: string): Promise<RecipientContact> {
@@ -120,7 +120,7 @@ function buildEmailShell(content: string) {
             <tr>
               <td style="padding:40px 20px;text-align:center;">
                 <p style="margin:0 0 12px;font-size:14px;color:${COLORS.textMuted};font-family:${FONTS.sans};line-height:1.6;">
-                  <a href="${APP_BASE_URL}" style="color:${COLORS.text};text-decoration:none;margin:0 8px;">قَلَم</a>
+                  <a href="${APP_BASE_URL}" style="color:${COLORS.text};text-decoration:none;margin:0 8px;">قَلم</a>
                   <span style="color:${COLORS.border};">·</span>
                   <a href="${APP_BASE_URL}/settings/notifications" style="color:${COLORS.textMuted};text-decoration:none;margin:0 8px;">تعديل الإشعارات</a>
                  
@@ -361,7 +361,7 @@ ${options.articleUrl}
 
 ────────────────────────
 
-قَلَم - منصة الكتابة العربية
+قَلم - منصة الكتابة العربية
 تعديل الإشعارات: ${APP_BASE_URL}/settings/notifications`;
 }
 
@@ -377,7 +377,7 @@ ${options.articleUrl}
 
 ────────────────────────
 
-قَلَم - منصة الكتابة العربية
+قَلم - منصة الكتابة العربية
 تعديل الإشعارات: ${APP_BASE_URL}/settings/notifications`;
 }
 
@@ -393,7 +393,7 @@ ${options.articleUrl}
 
 ────────────────────────
 
-قَلَم - منصة الكتابة العربية
+قَلم - منصة الكتابة العربية
 تعديل الإشعارات: ${APP_BASE_URL}/settings/notifications`;
 }
 
@@ -407,7 +407,7 @@ ${options.followerUrl}
 
 ────────────────────────
 
-قَلَم - منصة الكتابة العربية
+قَلم - منصة الكتابة العربية
 تعديل الإشعارات: ${APP_BASE_URL}/settings/notifications`;
 }
 

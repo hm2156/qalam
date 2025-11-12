@@ -382,8 +382,11 @@
   background-color: #f5f5f5;
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
-  font-family: 'Courier New', monospace;
+  font-family: 'Menlo', 'Consolas', 'Fira Code', 'Courier New', monospace;
   font-size: 0.9em;
+  direction: rtl;
+  text-align: right;
+  unicode-bidi: plaintext;
 }
 
 .article-content pre {
@@ -392,10 +395,32 @@
   border-radius: 0.5rem;
   overflow-x: auto;
   margin: 1.5rem 0;
+  direction: rtl;
+  text-align: right;
+  font-family: 'Menlo', 'Consolas', 'Fira Code', 'Courier New', monospace;
+  unicode-bidi: plaintext;
 }
 
 .article-content pre code {
   background-color: transparent;
   padding: 0;
+  direction: inherit;
+  text-align: inherit;
+  unicode-bidi: inherit;
+}
+
+.ProseMirror pre,
+.ProseMirror pre code {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Menlo', 'Consolas', 'Fira Code', 'Courier New', monospace !important;
+  unicode-bidi: plaintext;
+}
+
+.ProseMirror code {
+  font-family: 'Menlo', 'Consolas', 'Fira Code', 'Courier New', monospace !important;
+  direction: rtl;
+  text-align: right;
+  unicode-bidi: plaintext;
 }
 
