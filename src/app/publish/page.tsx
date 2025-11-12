@@ -1,7 +1,7 @@
 // app/publish/page.tsx (Example Submission Logic)
 
 'use client'; 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '../components/Header';
@@ -9,6 +9,25 @@ import { supabase } from '../../../lib/supabase/client';
 import TiptapEditor from '../components/TiptapEditor';
 
 export default function PublishPage() {
+  return (
+    <Suspense fallback={<PublishPageFallback />}>
+      <PublishPageContent />
+    </Suspense>
+  );
+}
+
+function PublishPageFallback() {
+  return (
+    <>
+      <Header />
+      <main className="mx-2 px-4 max-w-4xl sm:mx-22 sm:px-4 lg:max-w-7xl py-4 sm:py-6 md:py-8" dir="rtl">
+        <h1 className="mb-8 text-3xl font-light">...جاري التحميل</h1>
+      </main>
+    </>
+  );
+}
+
+function PublishPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const articleId = searchParams?.get('id');
