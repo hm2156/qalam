@@ -48,7 +48,6 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      flowType: 'pkce',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
         queryParams: {

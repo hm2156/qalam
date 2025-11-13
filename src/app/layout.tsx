@@ -1,4 +1,5 @@
 import './globals.css';
+import type { Metadata } from 'next';
 import { Almarai, Mirza, Aref_Ruqaa } from 'next/font/google';
 
 const almarai = Almarai({
@@ -22,9 +23,14 @@ const mirza = Mirza({
   display: 'swap',
 });
 
-export const metadata = {
-  title: 'قَلَم - منصة الكتابة العربية',
+export const metadata: Metadata = {
+  title: 'قَلم |  Qalam',
   description: 'قَلَم هي منصة عربية لكتابة المقالات ومشاركتها مع المجتمع العربي.',
+  icons: {
+    icon: [{ url: '/logo.png', type: 'image/png', sizes: 'any' }],
+    shortcut: ['/logo.png'],
+    apple: [{ url: '/logo.png' }],
+  },
 };
 
 export default function RootLayout({
