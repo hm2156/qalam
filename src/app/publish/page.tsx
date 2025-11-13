@@ -283,7 +283,7 @@ function PublishPageContent() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="w-full border-b border-gray-300 py-8 pb-8 text-4xl font-bold focus:border-black focus:outline-none placeholder:text-gray-400"
-                  style={{ fontFamily: 'var(--font-aref-ruqaa), serif', lineHeight: '1.4' }}
+                  style={{ fontFamily: 'var(--font-mirza), serif', lineHeight: '1.4' }}
                 />
               </div>
               

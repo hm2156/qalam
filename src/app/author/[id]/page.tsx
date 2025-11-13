@@ -7,7 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from '../../components/Header';
 import Link from 'next/link';
 import { supabase } from '../../../../lib/supabase/client';
-import { ArticleWithAuthor } from '../../explore/actions';
+import type { ArticleWithAuthor } from '../../../types/articles';
 
 interface Profile {
     id: string;

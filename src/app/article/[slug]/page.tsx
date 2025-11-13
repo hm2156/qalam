@@ -112,7 +112,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
       <main className="mx-2 px-4 max-w-3xl sm:mx-20 sm:px-4 lg:max-w-7xl py-4 sm:py-6 md:py-8" dir="rtl">
         
         {/* Article Header */}
-        <h1 className="text-4xl md:text-5xl font-bold mb-6 text-black leading-tight" style={{ fontFamily: 'var(--font-aref-ruqaa), serif' }}>
+        <h1 className="text-4xl sm:mt-5 md:text-5xl font-bold mb-6 text-black leading-tight" style={{ fontFamily: 'var(--font-mirza), serif' }}>
           {finalArticle.title}
         </h1>
         

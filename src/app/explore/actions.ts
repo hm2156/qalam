@@ -1,131 +1,139 @@
 'use server';
 
 import { createServerSupabaseClient } from '../../../lib/supabase/server';
+import type { ArticleWithAuthor } from '../../types/articles';
 
-interface Article {
+type ArticleRow = {
   id: number;
   title: string;
   slug: string;
   created_at: string;
   author_id: string;
-  reading_time?: number;
-  tag?: string;
-  content?: string;
-}
+  reading_time?: number | null;
+  tag?: string | null;
+  content?: string | null;
+};
 
-interface AuthorProfile {
-  display_name: string;
-  avatar_url?: string;
-}
+type ProfileRow = {
+  id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+};
 
-export interface ArticleWithAuthor extends Article {
-  authorName: string;
-  authorAvatar?: string;
-  authorBio?: string;
-  comments_count: number;
-  likes_count: number;
-}
+type CommentCountRow = {
+  article_id: number;
+  comment_count: number;
+};
+
+type LikeCountRow = {
+  article_id: number;
+  like_count: number;
+};
+
+const FALLBACK_AUTHOR_NAME = 'كاتب';
+const MAX_ARTICLES = 20;
 
 export async function fetchArticlesWithAuthors(tag: string = 'all'): Promise<ArticleWithAuthor[]> {
   const supabase = await createServerSupabaseClient();
 
-  // Build base query
-  let query = supabase
+  let articlesQuery = supabase
     .from('articles')
     .select('id, title, slug, created_at, author_id, reading_time, tag, content')
     .eq('status', 'published')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .range(0, MAX_ARTICLES - 1);
 
-  // Filter by tag if not 'all'
   if (tag !== 'all') {
-    query = query.eq('tag', tag);
+    articlesQuery = articlesQuery.eq('tag', tag);
   }
 
-  const { data: articlesData, error } = await query;
+  const { data: articlesData, error: articlesError } = await articlesQuery as {
+    data: ArticleRow[] | null;
+    error: unknown;
+  };
 
-  if (error || !articlesData || articlesData.length === 0) {
+  if (articlesError) {
+    console.error('Error fetching articles:', articlesError);
     return [];
   }
 
-  // Fetch author profiles
-  const authorIds = [...new Set(articlesData.map(a => a.author_id).filter(Boolean))];
-  const profileMap = new Map<string, AuthorProfile>();
-
-  if (authorIds.length > 0) {
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('id, display_name, avatar_url')
-      .in('id', authorIds);
-
-    if (profilesError) {
-      console.error('Error fetching profiles in server action:', profilesError);
-    }
-
-    if (profiles && profiles.length > 0) {
-      profiles.forEach(profile => {
-        // Ensure ID is a string for consistent Map key lookup
-        const profileId = String(profile.id);
-        const displayName = profile.display_name?.trim();
-        profileMap.set(profileId, {
-          display_name: displayName && displayName.length > 0 ? displayName : 'كاتب',
-          avatar_url: profile.avatar_url || undefined
-        });
-      });
-    }
+  if (!articlesData || articlesData.length === 0) {
+    return [];
   }
 
-  // Fetch counts for all articles
-  const articleIds = articlesData.map(a => a.id);
+  const authorIds = Array.from(
+    new Set(articlesData.map((article) => article.author_id).filter(Boolean))
+  );
+  const articleIds = articlesData.map((article) => article.id);
 
-  // Fetch comment counts
-  const { data: commentsData } = await supabase
-    .from('comments')
-    .select('article_id')
-    .in('article_id', articleIds)
-    .is('parent_id', null);
+  const [profilesResult, commentsResult, likesResult] = await Promise.all([
+    authorIds.length > 0
+      ? supabase
+          .from('profiles')
+          .select('id, display_name, avatar_url')
+          .in('id', authorIds)
+      : Promise.resolve({ data: [] as ProfileRow[] | null, error: null }),
+    articleIds.length > 0
+      ? supabase
+          .from('comments')
+          .select('article_id')
+          .in('article_id', articleIds)
+          .is('parent_id', null)
+      : Promise.resolve({ data: [] as CommentCountRow[] | null, error: null }),
+    articleIds.length > 0
+      ? supabase
+          .from('likes')
+          .select('article_id')
+          .in('article_id', articleIds)
+      : Promise.resolve({ data: [] as LikeCountRow[] | null, error: null }),
+  ]);
 
-  // Fetch like counts
-  const { data: likesData } = await supabase
-    .from('likes')
-    .select('article_id')
-    .in('article_id', articleIds);
+  if (profilesResult.error) {
+    console.error('Error fetching profiles:', profilesResult.error);
+  }
+  if (commentsResult.error) {
+    console.error('Error fetching comments:', commentsResult.error);
+  }
+  if (likesResult.error) {
+    console.error('Error fetching likes:', likesResult.error);
+  }
 
-  // Count comments and likes per article
+  const profileMap = new Map<string, ProfileRow>();
+  (profilesResult.data ?? []).forEach((profile) => {
+    const typedProfile = profile as ProfileRow;
+    profileMap.set(String(typedProfile.id), typedProfile);
+  });
+
   const commentsCountMap = new Map<number, number>();
+  ((commentsResult.data ?? []) as CommentCountRow[]).forEach((row) => {
+    commentsCountMap.set(row.article_id, Number(row.comment_count) || 0);
+  });
+
   const likesCountMap = new Map<number, number>();
-
-  commentsData?.forEach(comment => {
-    const count = commentsCountMap.get(comment.article_id) || 0;
-    commentsCountMap.set(comment.article_id, count + 1);
+  ((likesResult.data ?? []) as LikeCountRow[]).forEach((row) => {
+    likesCountMap.set(row.article_id, Number(row.like_count) || 0);
   });
 
-  likesData?.forEach(like => {
-    const count = likesCountMap.get(like.article_id) || 0;
-    likesCountMap.set(like.article_id, count + 1);
-  });
-
-  // Combine articles with author info and counts
-  return articlesData.map(article => {
-    // Handle null/undefined author_id and ensure string conversion for Map lookup
-    const authorId = article.author_id ? String(article.author_id) : null;
-    const profile = authorId ? profileMap.get(authorId) : undefined;
-    
-    // Get author name - prioritize profile display_name, fallback to 'كاتب'
-    let authorName = 'كاتب';
-    if (profile && profile.display_name) {
-      const trimmedName = profile.display_name.trim();
-      if (trimmedName.length > 0) {
-        authorName = trimmedName;
-      }
-    }
+  return articlesData.map((article) => {
+    const profile = article.author_id ? profileMap.get(String(article.author_id)) : undefined;
+    const authorName =
+      profile?.display_name?.trim()?.length
+        ? profile.display_name.trim()
+        : FALLBACK_AUTHOR_NAME;
 
     return {
-      ...article,
-      authorName, // Always set authorName, never undefined or empty
-      authorAvatar: profile?.avatar_url || undefined,
-      authorBio: undefined, // Bio column doesn't exist in profiles table yet
-      comments_count: commentsCountMap.get(article.id) || 0,
-      likes_count: likesCountMap.get(article.id) || 0,
+      id: article.id,
+      title: article.title,
+      slug: article.slug,
+      created_at: article.created_at,
+      author_id: article.author_id,
+      reading_time: article.reading_time ?? undefined,
+      tag: article.tag ?? undefined,
+      content: article.content ?? undefined,
+      authorName,
+      authorAvatar: profile?.avatar_url ?? undefined,
+      comments_count: commentsCountMap.get(article.id) ?? 0,
+      likes_count: likesCountMap.get(article.id) ?? 0,
     };
   });
 }

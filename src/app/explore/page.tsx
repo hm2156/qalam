@@ -6,7 +6,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '../components/Header';
 import Link from 'next/link';
-import { fetchArticlesWithAuthors, ArticleWithAuthor } from './actions';
+import type { ArticleWithAuthor } from '@/types/articles';
+import { fetchArticlesWithAuthors } from './actions';
 
 // ---------------------------------------------------
 // Component: Article List Item
@@ -70,7 +71,7 @@ const ArticleListItem = ({ article, availableTags }: ArticleCardProps) => {
                 {/* title */}
                 <h2 
                     className="text-2xl sm:text-3xl font-bold leading-snug tracking-tight text-black hover:text-gray-700 transition-colors"
-                    style={{ fontFamily: 'var(--font-aref-ruqaa), serif' }}
+                    style={{ fontFamily: 'var(--font-mirza), serif' }}
                 >
                     {article.title}
                 </h2>
@@ -84,7 +85,7 @@ const ArticleListItem = ({ article, availableTags }: ArticleCardProps) => {
                     <span>·</span>
                         <span className="flex items-center gap-1.5">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 01 2-2h14a2 2 0 01 2 2z"/>
                             </svg>
                         <span>التعليقات {article.comments_count ?? 0}</span>
                         </span>
@@ -111,7 +112,7 @@ const TrendingTopics = ({ tags, selectedTag, onSelectTag }: {
     onSelectTag: (tag: string) => void;
 }) => (
     <aside className="hidden lg:block">
-        <h3 className="text-xl font-bold mb-4" style={{ fontFamily: 'var(--font-aref-ruqaa), serif' }}>
+        <h3 className="text-xl font-bold mb-4" style={{ fontFamily: 'var(--font-mirza), serif' }}>
                     التصنيفات
                 </h3>
         <div className="flex flex-wrap gap-2">
@@ -244,31 +245,45 @@ export default function ExplorePage() {
   ];
 
   useEffect(() => {
-    fetchArticles();
-  }, [selectedTag]);
+    let isMounted = true;
 
-  const fetchArticles = async () => {
-    setLoading(true);
-    
-    try {
+    const fetchArticles = async () => {
+      setLoading(true);
+
+      try {
         const articlesWithAuthors = await fetchArticlesWithAuthors(selectedTag);
-        
-        // Separate featured article if viewing 'all'
-        if (selectedTag === 'all' && articlesWithAuthors.length > 0) {
-            setFeaturedArticle(articlesWithAuthors[0]);
-            setArticles(articlesWithAuthors.slice(1));
-        } else {
-            setFeaturedArticle(null);
-            setArticles(articlesWithAuthors);
+
+        if (!isMounted) {
+          return;
         }
-    } catch (error) {
+
+        if (selectedTag === 'all' && articlesWithAuthors.length > 0) {
+          setFeaturedArticle(articlesWithAuthors[0]);
+          setArticles(articlesWithAuthors.slice(1));
+        } else {
+          setFeaturedArticle(null);
+          setArticles(articlesWithAuthors);
+        }
+      } catch (error) {
         console.error('Error fetching articles:', error);
+        if (!isMounted) {
+          return;
+        }
         setArticles([]);
         setFeaturedArticle(null);
-    } finally {
-        setLoading(false);
-    }
-  };
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchArticles();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedTag]);
 
   return (
     <>
@@ -370,7 +385,7 @@ export default function ExplorePage() {
                                                         {/* bigger title */}
                                                         <h2
                                                             className="text-3xl sm:text-4xl font-bold leading-snug tracking-tight text-black hover:text-gray-700 transition-colors"
-                                                            style={{ fontFamily: 'var(--font-aref-ruqaa), serif' }}
+                                                            style={{ fontFamily: 'var(--font-mirza), serif' }}
                                                         >
                                                             {featuredArticle.title}
                     </h2>
@@ -386,7 +401,7 @@ export default function ExplorePage() {
                                                             <span>·</span>
                                                             <span className="flex items-center gap-1.5">
                                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 01 2-2h14a2 2 0 01 2 2z"/>
                                                                 </svg>
                                                                 <span>التعليقات {featuredArticle.comments_count ?? 0}</span>
                                                             </span>
