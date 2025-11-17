@@ -1,13 +1,10 @@
-// app/login/page.tsx
-
-'use client'; // This component must be a Client Component
+'use client';
 
 import { supabase } from '../../../lib/supabase/client';
 import Header from '../components/Header';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-// Google Icon SVG Component
 const GoogleIcon = () => (
   <svg
     className="w-5 h-5"
@@ -36,7 +33,6 @@ const GoogleIcon = () => (
 export default function LoginPage() {
   const router = useRouter();
   
-  // Optional: Check if the user is already logged in
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {

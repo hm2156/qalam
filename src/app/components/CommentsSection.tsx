@@ -63,7 +63,6 @@ export default function CommentsSection({
     });
   };
 
-  // Fetch user ID on client side (more reliable than server-side)
   useEffect(() => {
     const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -420,7 +419,6 @@ export default function CommentsSection({
             value={newComment}
             onChange={setNewComment}
             onSubmit={() => {
-              // Ctrl/Cmd+Enter to submit
               const fake = new Event('submit', { bubbles: true, cancelable: true }) as unknown as React.FormEvent;
               handleSubmitComment(fake);
             }}

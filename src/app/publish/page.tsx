@@ -1,5 +1,3 @@
-// app/publish/page.tsx (Example Submission Logic)
-
 'use client'; 
 import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -40,7 +38,6 @@ function PublishPageContent() {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoadingArticle, setIsLoadingArticle] = useState(false);
 
-  // Predefined tags in Arabic
   const availableTags = [
     'general',
     'technology',
@@ -81,7 +78,6 @@ function PublishPageContent() {
     entertainment: 'ترفيه',
   };
 
-  // Load article for editing
   useEffect(() => {
     const loadArticle = async () => {
       if (!articleId) return;
@@ -94,7 +90,6 @@ function PublishPageContent() {
         return;
       }
 
-      // Convert articleId to number if it's a string
       const articleIdNum = parseInt(articleId, 10);
       if (isNaN(articleIdNum)) {
         console.error('Invalid article ID:', articleId);
@@ -104,8 +99,6 @@ function PublishPageContent() {
         return;
       }
 
-      // Try to load the article - use maybeSingle to handle not found gracefully
-      // RLS policy allows users to view their own articles OR published articles
       const { data: article, error } = await supabase
         .from('articles')
         .select('id, title, content, slug, status, tag, author_id')
@@ -135,7 +128,6 @@ function PublishPageContent() {
         return;
       }
 
-      // Security check: Ensure user owns the article
       if (article.author_id !== session.user.id) {
         console.error('Access denied: User does not own this article');
         console.error('Article author ID:', article.author_id);
@@ -162,7 +154,6 @@ function PublishPageContent() {
     e.preventDefault();
     setLoading(true);
 
-    // Get fresh session to ensure authentication is valid
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError || !session || !session.user) {
@@ -174,14 +165,12 @@ function PublishPageContent() {
 
     const user = session.user;
 
-    // Validate title
     if (!title || !title.trim()) {
       alert("الرجاء إدخال العنوان.");
       setLoading(false);
       return;
     }
 
-    // Validate content - check if it's not just empty HTML tags
     const contentText = content.replace(/<[^>]*>/g, '').trim();
     if (!content || !contentText) {
       alert("الرجاء إدخال محتوى المقالة.");
@@ -189,18 +178,16 @@ function PublishPageContent() {
       return;
     }
 
-    // Ensure tag is set to 'general' if empty or not provided
     const finalTag = !tag || tag.trim() === '' ? 'general' : tag.trim().toLowerCase();
 
     if (isEditing && articleId) {
-      // Update existing article - preserve the current status
       const { error } = await supabase
         .from('articles')
         .update({
           title: title.trim(),
           content: content.trim(),
           tag: finalTag,
-          status: currentStatus, // Preserve the original status
+          status: currentStatus,
         })
         .eq('id', articleId)
         .eq('author_id', user.id);
@@ -213,8 +200,6 @@ function PublishPageContent() {
         router.push('/dashboard');
       }
     } else {
-      // Create new article
-      // Simple slug generation - handle Arabic characters better
       let slug = title.trim();
       if (/[\u0600-\u06FF]/.test(slug)) {
         const timestamp = Date.now();
@@ -287,7 +272,6 @@ function PublishPageContent() {
                 />
               </div>
               
-              {/* Tag Selection - Moved to top right */}
               <div className="md:mt-14">
                 <label htmlFor="tag" className="block text-sm font-medium text-gray-700 mb-2">
                   التصنيف

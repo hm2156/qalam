@@ -22,7 +22,6 @@ export default function RTLContentEditable({
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
-  // Keep DOM in sync when parent value changes
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -40,7 +39,6 @@ export default function RTLContentEditable({
   const handleInput = () => {
     const el = ref.current;
     if (!el) return;
-    // Normalize newlines: contenteditable uses <div><br></div> etc.
     const text = el.innerText.replace(/\r\n/g, '\n');
     if (maxLength && text.length > maxLength) {
       el.innerText = text.slice(0, maxLength);
@@ -58,13 +56,11 @@ export default function RTLContentEditable({
   };
 
   const handleKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
-    // Submit on Ctrl/Cmd+Enter
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
       e.preventDefault();
       onSubmit?.();
       return;
     }
-    // Enter => newline, Shift+Enter => newline (default), prevent <div> nesting weirdness
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       document.execCommand('insertLineBreak');
@@ -79,7 +75,6 @@ export default function RTLContentEditable({
       suppressContentEditableWarning
       dir="rtl"
       lang="ar"
-      // plaintext keeps bidi sane with mixed Arabic/Latin
       style={{ unicodeBidi: 'plaintext' }}
       data-placeholder={placeholder}
       className={
@@ -93,7 +88,6 @@ export default function RTLContentEditable({
   );
 }
 
-// Util: move caret to end after programmatic changes
 function placeCaretAtEnd(el: HTMLElement) {
   const range = document.createRange();
   range.selectNodeContents(el);

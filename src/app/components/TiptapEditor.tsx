@@ -1,4 +1,3 @@
-// app/components/TiptapEditor.tsx
 
 'use client'; 
 
@@ -17,7 +16,6 @@ import { TableRow } from '@tiptap/extension-table-row';
 import { TableHeader } from '@tiptap/extension-table-header';
 import { TableCell } from '@tiptap/extension-table-cell';
 
-// Custom Image Resize Extension
 const ImageResize = Extension.create({
   name: 'imageResize',
   
@@ -56,7 +54,6 @@ const ImageResize = Extension.create({
   },
 });
 
-// Define the props for our editor component
 interface TiptapEditorProps {
   initialContent: string;
   onChange: (content: string) => void;
@@ -67,13 +64,11 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
   const [showImageOptions, setShowImageOptions] = useState(false);
   const [selectedImagePos, setSelectedImagePos] = useState<number | null>(null);
   
-  // Define extensions, including the crucial TextAlign extension
   const extensions = [
     StarterKit.configure({
-      // Disable default extensions we might re-implement or conflict with
       bulletList: { keepAttributes: true },
       orderedList: { keepAttributes: true },
-      blockquote: false, // We'll configure it separately
+      blockquote: false, 
       codeBlock: {
          HTMLAttributes: {
            class: 'code-block-editor',
@@ -84,20 +79,17 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
        },
     }),
     
-    // Crucial for RTL: Configure TextAlign to set 'right' as the default direction
     TextAlign.configure({
       types: ['heading', 'paragraph', 'blockquote', 'tableHeader', 'tableCell'],
-      defaultAlignment: 'right', // Forces initial alignment to the right for Arabic
+      defaultAlignment: 'right', 
     }),
     
-    // Blockquote extension
     Blockquote.configure({
       HTMLAttributes: {
         class: 'border-r-4 border-gray-300 pr-4 my-4',
       },
     }),
     
-    // Link extension
     Link.configure({
       openOnClick: true,
       HTMLAttributes: {
@@ -107,7 +99,6 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
       },
     }),
     
-    // Image extension with resize support
     Image.extend({
       addAttributes() {
         return {
@@ -158,10 +149,8 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
       },
     }),
     
-    // Image resize extension
     ImageResize,
     
-    // Placeholder extension
     Placeholder.configure({
       placeholder: 'ابدأ الكتابة من هنا...',
     }),
@@ -189,31 +178,27 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
   const editor = useEditor({
     extensions,
     content: initialContent,
-    immediatelyRender: false, // Prevent SSR hydration mismatches
-    // This function runs on every content update and calls the parent's onChange prop
+    immediatelyRender: false, 
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML()); // We save the content as HTML string
+      onChange(editor.getHTML()); 
     },
     onSelectionUpdate: ({ editor }) => {
       const { selection } = editor.state;
       const { $anchor } = selection;
       
-      // Check if we're selecting an image node
       let imagePos: number | null = null;
       
       editor.state.doc.descendants((node, pos) => {
         if (node.type.name === 'image') {
-          // Check if selection is within this image node
           if (pos <= $anchor.pos && pos + node.nodeSize > $anchor.pos) {
             imagePos = pos;
-            return false; // Stop searching
+            return false; 
           }
         }
       });
       
       setSelectedImagePos(imagePos);
     },
-    // Enforce RTL direction at the editor level (ProseMirror container)
     editorProps: {
       attributes: {
         dir: 'rtl',
@@ -223,7 +208,6 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
     },
   });
 
-  // Update editor content when initialContent changes (for editing mode)
   useEffect(() => {
     if (editor && initialContent !== undefined) {
       const currentContent = editor.getHTML();
@@ -233,7 +217,6 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
     }
   }, [editor, initialContent]);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (showImageOptions && !(event.target as Element).closest('.image-dropdown-container')) {
@@ -247,7 +230,6 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
     }
   }, [showImageOptions]);
 
-  // Handle image clicks to select them
   useEffect(() => {
     if (!editor) return;
 
@@ -258,13 +240,11 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
         const { view } = editor;
         const { state } = view;
         
-        // Find the image node position
         state.doc.descendants((node, pos) => {
           if (node.type.name === 'image') {
             try {
               const posFromDOM = view.posAtDOM(img, 0);
               if (posFromDOM >= 0 && Math.abs(posFromDOM - pos) < 10) {
-                // Select the image using NodeSelection
                 const selection = NodeSelection.create(state.doc, pos);
                 const tr = state.tr.setSelection(selection);
                 view.dispatch(tr);
@@ -272,7 +252,6 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
                 return false;
               }
             } catch (e) {
-              // Fallback: match by src
               if (node.attrs.src === img.src) {
                 const selection = NodeSelection.create(state.doc, pos);
                 const tr = state.tr.setSelection(selection);
@@ -294,7 +273,6 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
     };
   }, [editor]);
 
-  // Image toolbar functions
   const getSelectedImageNode = (): { node: any; pos: number } | null => {
     if (!editor || selectedImagePos === null) return null;
     
@@ -320,12 +298,10 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
     const { node, pos } = imageData;
     const { view } = editor;
     
-    // Get actual image dimensions from DOM if not in attributes
     let currentWidth = parseInt(node.attrs.width || '0');
     let currentHeight = parseInt(node.attrs.height || '0');
     
     if (!currentWidth || !currentHeight) {
-      // Try to get from DOM
       try {
         const domNode = view.nodeDOM(pos);
         if (domNode && domNode instanceof HTMLImageElement) {
@@ -367,7 +343,6 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
     editor.view.focus();
   };
 
-  // Medium-style menu bar
   const MenuBar = () => {
     if (!editor) return null;
  
@@ -401,12 +376,10 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
         return;
       }
 
-      // Ensure URL has protocol
       const finalUrl = url.startsWith('http://') || url.startsWith('https://') 
         ? url 
         : `https://${url}`;
 
-      // If text is selected, apply link to selection, otherwise insert link
       if (editor.state.selection.empty) {
         editor.chain().focus().insertContent(`<a href="${finalUrl}">${finalUrl}</a>`).run();
       } else {
@@ -418,13 +391,11 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
       const file = event.target.files?.[0];
       if (!file) return;
 
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         alert('الرجاء اختيار ملف صورة صحيح');
         return;
       }
 
-      // Validate file size (max 10MB)
       if (file.size > 10 * 1024 * 1024) {
         alert('حجم الملف كبير جداً. الحد الأقصى هو 10 ميجابايت');
         return;
@@ -434,7 +405,6 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
       reader.onload = (e) => {
         const base64 = e.target?.result as string;
         if (base64) {
-          // Create image element to get dimensions
           const img = document.createElement('img');
           img.onload = () => {
             const maxWidth = 600;
@@ -447,7 +417,6 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
               height: height
             }).run();
             
-            // Set alignment separately
             setTimeout(() => {
               const { state } = editor.view;
               state.doc.descendants((node, pos) => {
@@ -471,7 +440,6 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
       };
       reader.readAsDataURL(file);
 
-      // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -482,11 +450,9 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
       const url = window.prompt('أدخل رابط الصورة:', '');
 
       if (url && url.trim() !== '') {
-        // Ensure URL has protocol
         const finalUrl = url.startsWith('http://') || url.startsWith('https://') 
           ? url 
           : `https://${url}`;
-        // Create image element to get dimensions
         const img = document.createElement('img');
         img.onload = () => {
           const maxWidth = 600;
@@ -499,7 +465,6 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
             height: height
           }).run();
           
-          // Set alignment separately
           setTimeout(() => {
             const { state } = editor.view;
             state.doc.descendants((node, pos) => {
@@ -516,7 +481,6 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
           }, 50);
         };
         img.onerror = () => {
-          // If image fails to load, insert without dimensions
           editor.chain().focus().setImage({ 
             src: finalUrl
           }).run();
@@ -532,7 +496,6 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
 
     return (
       <div className="flex flex-wrap gap-1 border-b border-gray-200 pb-3 mb-6">
-        {/* BOLD Button */}
         <button
           onClick={() => editor.chain().focus().toggleBold().run()}
           type="button"
@@ -544,7 +507,6 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
           <strong>B</strong>
         </button>
 
-        {/* ITALIC Button */}
         <button
           onClick={() => editor.chain().focus().toggleItalic().run()}
           type="button"
@@ -556,7 +518,6 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
           <em>i</em>
         </button>
 
-        {/* Strike Button */}
         <button
           onClick={() => editor.chain().focus().toggleStrike().run()}
           type="button"
@@ -568,7 +529,6 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
           <span className="line-through">S</span>
         </button>
 
-        {/* Heading 1 Button */}
         <button
           onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
           type="button"
@@ -580,7 +540,6 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
           H1
         </button>
 
-        {/* Heading 2 Button */}
         <button
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
           type="button"
@@ -592,7 +551,7 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
           H2
         </button>
         
-        {/* Heading 3 Button */}
+
         <button
           onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
           type="button"
@@ -604,7 +563,6 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
           H3
         </button>
 
-        {/* Blockquote Button */}
         <button
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           type="button"
@@ -774,7 +732,6 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
     );
   };
 
-  // Image toolbar component
   const ImageToolbar = () => {
     if (!editor || selectedImagePos === null) return null;
     
@@ -844,7 +801,6 @@ export default function TiptapEditor({ initialContent, onChange }: TiptapEditorP
   return (
     <div className="editor-container relative">
       <MenuBar />
-      {/* EditorContent container uses the styling defined in editorProps */}
       <EditorContent editor={editor} className="focus:outline-none" />
       <ImageToolbar />
     </div>

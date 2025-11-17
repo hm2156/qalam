@@ -1,4 +1,3 @@
-// app/page.tsx - Landing page (public)
 
 import Link from 'next/link';
 import Header from './components/Header';
@@ -10,7 +9,6 @@ export default function Home() {
       <AuthRedirect />
       <Header />
       <main className="mx-auto max-w-7xl px-8" dir="rtl">
-        {/* Hero Section */}
         <section className="py-20 md:py-32">
           <div className="max-w-5xl">
             <h1 
@@ -41,18 +39,15 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Medium-style Visual Break */}
         <div className="w-full h-px bg-gray-200"></div>
       </main>
 
-      {/* Features Section - Full Width */}
       <section className="py-30 bg-black w-full" dir="rtl">
         <div className="mx-auto max-w-7xl px-8">
           <h2 className="text-5xl font-regular mb-18 text-center text-white" style={{ fontFamily: 'var(--font-aref-ruqaa), serif' }}>
             لماذا تختار قلم؟
           </h2>
           <div className="grid md:grid-cols-3 gap-12">
-            {/* Feature 1: Writing */}
             <div className="space-y-4">
               <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-4">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -67,7 +62,6 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Feature 2: Community */}
             <div className="space-y-4">
               <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-4">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,7 +76,6 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Feature 3: Design */}
             <div className="space-y-4">
               <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-4">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -101,7 +94,6 @@ export default function Home() {
       </section>
 
       <main className="mx-auto max-w-7xl px-18 pt-15" dir="rtl">
-        {/* Stats/Hashtags Section */}
         <section className="py-30 pt-25">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
@@ -131,7 +123,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* CTA Section */}
         <section className="py-20 border-t border-gray-200">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-4xl md:text-5xl font-bold text-black mb-6" style={{ fontFamily: 'var(--font-aref-ruqaa), serif' }}>
@@ -150,7 +141,6 @@ export default function Home() {
         </section>
       </main>
 
-      {/* Footer */}
       <footer className="py-12 border-t border-gray-200 mt-5">
         <div className="mx-auto max-w-7xl px-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-gray-600 text-sm">

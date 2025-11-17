@@ -20,7 +20,6 @@ interface RecipientContact {
 const recipientCache = new Map<string, RecipientContact>();
 const profileNameCache = new Map<string, string | null>();
 
-// Medium-inspired minimal design tokens
 const COLORS = {
   text: '#242424',
   textLight: '#6B6B6B',
@@ -87,7 +86,6 @@ async function getProfileDisplayName(profileId: string | null | undefined): Prom
   return displayName;
 }
 
-// Medium-style minimal email shell
 function buildEmailShell(content: string) {
   return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -136,7 +134,6 @@ function buildEmailShell(content: string) {
 </html>`;
 }
 
-// Article Published Email (Medium style)
 function buildPublishEmail(options: {
   recipientName: string;
   authorName: string;
@@ -186,7 +183,6 @@ function buildPublishEmail(options: {
   return buildEmailShell(content);
 }
 
-// Comment Notification Email (Medium style)
 function buildCommentEmail(options: {
   recipientName: string;
   commenterName: string;
@@ -243,7 +239,6 @@ function buildCommentEmail(options: {
   return buildEmailShell(content);
 }
 
-// Like Notification Email (Medium style)
 function buildLikeEmail(options: {
   recipientName: string;
   likerName: string;
@@ -297,7 +292,6 @@ function buildLikeEmail(options: {
   return buildEmailShell(content);
 }
 
-// Follow Notification Email (Medium style)
 function buildFollowEmail(options: {
   recipientName: string;
   followerName: string;
@@ -348,7 +342,6 @@ function buildFollowEmail(options: {
   return buildEmailShell(content);
 }
 
-// Plain text versions (Medium style - clean and simple)
 function buildPlainTextPublish(options: { authorName: string; articleTitle: string; excerpt: string; articleUrl: string }) {
   return `${options.authorName} نشر مقالاً جديداً على قَلَم
 

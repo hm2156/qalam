@@ -22,7 +22,6 @@ export default function AuthRedirect() {
 
     checkAuth();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session && pathname === '/') {
         router.replace('/home');

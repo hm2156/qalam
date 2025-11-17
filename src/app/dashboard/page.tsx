@@ -1,4 +1,3 @@
-// app/dashboard/page.tsx
 
 'use client';
 
@@ -8,7 +7,6 @@ import Header from '../components/Header';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-// Define the type for an article from your database
 interface Article {
   id: number;
   title: string;
@@ -50,22 +48,16 @@ export default function AuthorDashboard() {
   const [saving, setSaving] = useState(false);
   const router = useRouter();
 
-  // ------------------------------------------
-  // Fetch Articles (using useCallback to memoize)
-  // ------------------------------------------
   const fetchArticles = useCallback(async () => {
     setLoading(true);
     
-    // Check for user session
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      // Redirect unauthenticated users to login
       router.push('/login');
       return;
     }
 
-    // Fetch articles where author_id matches the current user's ID
     const { data, error } = await supabase
       .from('articles')
       .select('id, title, slug, created_at, status, review_submitted_at, reviewed_at, reviewed_by, review_notes')
@@ -80,7 +72,6 @@ export default function AuthorDashboard() {
     setLoading(false);
   }, [router]);
 
-  // Fetch saved articles
   const fetchSavedArticles = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -88,7 +79,6 @@ export default function AuthorDashboard() {
       return;
     }
 
-    // Fetch bookmarked articles
     const { data: bookmarks, error: bookmarksError } = await supabase
       .from('bookmarks')
       .select('article_id, created_at')
@@ -105,7 +95,6 @@ export default function AuthorDashboard() {
       return;
     }
 
-    // Fetch the actual articles
     const articleIds = bookmarks.map(b => b.article_id);
     const { data: articlesData, error: articlesError } = await supabase
       .from('articles')
@@ -196,14 +185,12 @@ export default function AuthorDashboard() {
      }
    }, [isReviewer, fetchPendingArticles]);
 
-  // Load user profile data from profiles table
   const loadUserProfile = async () => {
     const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (currentUser) {
       setUser(currentUser);
       setIsReviewer(REVIEWER_EMAILS.includes((currentUser.email || '').toLowerCase()));
       
-      // Load from profiles table
       const { data: profile } = await supabase
         .from('profiles')
         .select('display_name, avatar_url, bio, twitter_url, linkedin_url, website_url, github_url')
@@ -219,25 +206,21 @@ export default function AuthorDashboard() {
         setWebsiteUrl(profile.website_url || '');
         setGithubUrl(profile.github_url || '');
       } else {
-        // Fallback to user metadata if profile doesn't exist
         setDisplayName(currentUser.user_metadata?.full_name || currentUser.user_metadata?.display_name || '');
         setAvatarUrl(currentUser.user_metadata?.avatar_url || currentUser.user_metadata?.picture || '');
       }
     }
   };
 
-  // Handle profile picture upload
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       alert('الرجاء اختيار ملف صورة صحيح');
       return;
     }
 
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       alert('حجم الملف كبير جداً. الحد الأقصى هو 2 ميجابايت');
       return;
@@ -246,12 +229,10 @@ export default function AuthorDashboard() {
     setSaving(true);
 
     try {
-      // Convert to base64 for now (in production, upload to Supabase Storage)
       const reader = new FileReader();
       reader.onload = async (e) => {
         const base64 = e.target?.result as string;
         
-        // Update profiles table
         const { error } = await supabase
           .from('profiles')
           .upsert({
@@ -283,13 +264,11 @@ export default function AuthorDashboard() {
     }
   };
 
-  // Handle display name update
   const handleSaveProfile = async () => {
     if (!user) return;
 
     setSaving(true);
 
-    // Update profiles table
     const { error } = await supabase
       .from('profiles')
       .upsert({
@@ -414,9 +393,6 @@ export default function AuthorDashboard() {
     [pendingNotes, triggerArticleAction]
   );
 
-  // ------------------------------------------
-  // Delete Article Function
-  // ------------------------------------------
   const handleDeleteArticle = async (article: Article) => {
     if (!confirm(`هل أنت متأكد من حذف المقالة "${article.title}"؟ لا يمكن التراجع عن هذا الإجراء.`)) {
       return;
@@ -436,9 +412,6 @@ export default function AuthorDashboard() {
     }
   };
 
-  // ------------------------------------------
-  // Remove Bookmark Function
-  // ------------------------------------------
   const handleRemoveBookmark = async (article: Article) => {
     if (!user) return;
 
@@ -831,7 +804,6 @@ export default function AuthorDashboard() {
 
                     {/* Actions */}
                     <div className="flex flex-wrap gap-2 sm:gap-2 sm:mr-6 sm:items-center">
-                      {/* Edit Button - Always show for editing */}
                       <Link 
                         href={`/publish?id=${article.id}`}
                         className="text-xs sm:text-sm text-gray-600 hover:text-black px-2 sm:px-3 py-1 rounded hover:bg-gray-100 transition whitespace-nowrap"
@@ -839,7 +811,6 @@ export default function AuthorDashboard() {
                         تعديل
                       </Link>
                       
-                      {/* View Button - Only for published articles */}
                       {article.status === 'published' && (
                         <Link 
                           href={`/article/${article.slug}`}
@@ -850,7 +821,6 @@ export default function AuthorDashboard() {
                         </Link>
                       )}
                       
-                      {/* Submit for review / approval actions */}
                       {(article.status === 'draft' || article.status === 'rejected') && (
                         <>
                           <button
@@ -923,7 +893,6 @@ export default function AuthorDashboard() {
                         </button>
                       )}
                       
-                      {/* Delete Button */}
                       <button
                         onClick={() => handleDeleteArticle(article)}
                         className="text-xs sm:text-sm text-red-600 hover:text-red-800 px-2 sm:px-3 py-1 rounded hover:bg-red-50 transition whitespace-nowrap"
@@ -954,7 +923,7 @@ export default function AuthorDashboard() {
                 {savedArticles.map((article) => (
                   <div key={article.id} className="p-4 sm:p-6 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4 hover:bg-gray-50 transition-colors">
                     
-                    {/* Article Info */}
+                    
                     <div className="flex-1 min-w-0">
                       <Link href={`/article/${article.slug}`}>
                         <h2 className="text-lg sm:text-xl font-semibold mb-2 text-black hover:text-gray-600 transition break-words">
@@ -989,7 +958,7 @@ export default function AuthorDashboard() {
 
                     {/* Actions */}
                     <div className="flex flex-wrap gap-2 sm:gap-2 sm:mr-6 sm:items-center">
-                      {/* View Button */}
+                     
                       <Link 
                         href={`/article/${article.slug}`}
                         target="_blank"
@@ -998,7 +967,7 @@ export default function AuthorDashboard() {
                         عرض
                       </Link>
                       
-                      {/* Remove Bookmark Button */}
+                      
                       <button
                         onClick={() => handleRemoveBookmark(article)}
                         className="text-xs sm:text-sm text-red-600 hover:text-red-800 px-2 sm:px-3 py-1 rounded hover:bg-red-50 transition whitespace-nowrap"

@@ -1,4 +1,3 @@
-// app/components/Header.tsx (Responsiveness Fixed - Style Preserved)
 
 'use client';
 
@@ -12,12 +11,10 @@ export default function Header() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if user is logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsLoggedIn(!!session);
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -34,20 +31,17 @@ export default function Header() {
   };
 
   return (
-    <header className="p-4 mx-2"> {/* ⬅️ FIXED: Simplified margin for full width */}
+    <header className="p-4 mx-2">
       <div className="sm:mx-20 sm:mt-10 mx-auto flex max-w-7xl items-center gap-4">
         
-        {/* Logo/Site Title */}
         <Link 
           href={isLoggedIn ? "/home" : "/"} 
-          // ⬅️ FIXED: Reduced logo size on mobile (text-3xl) and large size (sm:text-5xl)
           className="text-3xl sm:text-5xl font-bold text-black m-2 flex-shrink-0" 
           style={{ fontFamily: 'var(--font-aref-ruqaa), serif' }}
         >
            قَلم
         </Link>
         
-        {/* Navigation */}
         <nav 
           className="mr-auto flex items-center gap-3 sm:gap-4 overflow-x-auto whitespace-nowrap px-2"
         >

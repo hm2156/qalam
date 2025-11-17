@@ -1,36 +1,30 @@
-// app/logged-in-home/page.tsx (or wherever you place this)
 
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '../../../lib/supabase/client'; // Adjusted path for better structure
+import { supabase } from '../../../lib/supabase/client';
 import Link from 'next/link';
 import Header from '../components/Header';
 
 export default function LoggedInHome() {
   const router = useRouter();
-  // We still need loading state to ensure the auth check completes
   const [loading, setLoading] = useState(true); 
 
   useEffect(() => {
-    // Check if user is authenticated
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        // If no session, redirect to the public homepage
         router.replace('/');
         return;
       }
       
-      // Since we don't need the name, we just confirm authentication
       setLoading(false);
     };
 
     checkAuth();
 
-    // Listen for auth changes (for better UX if the session expires)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
         router.replace('/');
@@ -66,22 +60,18 @@ export default function LoggedInHome() {
               >
                 أهلاً أيها الكاتب.
               </span>
-              {/* <span className="text-xl md:text-xl font-normal text-gray-700 block mt-4" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                مداد قلمك ينتظر.
-              </span> */}
             </h1>
             <p className="text-xl md:text-xl sm:text-lg text-gray-700 mb-8 leading-relaxed max-w-3xl pt-3">
               ابدأ الآن مقالتك الجديدة، أو تابع العمل على مسوداتك.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              {/* PRIMARY CTA */}
+  
               <Link 
                 href="/publish" 
                 className="inline-flex items-center justify-center rounded bg-black px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-2.5 text-sm sm:text-base text-white hover:bg-gray-800 transition-colors font-medium"
               >
                 ابدأ كتابة مقالة جديدة
               </Link>
-              {/* Secondary CTAs */}
               <Link 
                 href="/dashboard" 
                 className="inline-flex items-center justify-center rounded border border-gray-300 px-4 py-2 sm:px-5 sm:py-2.5 md:px-2 md:py-1 text-sm sm:text-base text-black hover:border-black transition-colors font-medium"
@@ -98,7 +88,6 @@ export default function LoggedInHome() {
           </div>
         </section>
 
-        {/* Quick Actions Section - Consistent style with landing page */}
         <section className="py-20 border-t border-gray-200">
           <h2 className="text-3xl font-bold mb-12" style={{ fontFamily: 'var(--font-aref-ruqaa), serif' }}>
             ماذا تريد أن تفعل؟
@@ -132,7 +121,6 @@ export default function LoggedInHome() {
         </section>
       </main>
 
-      {/* Footer (Simplified) */}
       <footer className="py-12 border-t border-gray-200 mt-5 mx-25">
         <div className="mx-auto max-w-7xl px-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-gray-600 text-sm">

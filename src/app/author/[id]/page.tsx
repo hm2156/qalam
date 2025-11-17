@@ -1,4 +1,3 @@
-// app/author/[id]/page.tsx
 
 'use client';
 
@@ -65,7 +64,6 @@ export default function AuthorProfilePage() {
 
     const fetchProfile = async () => {
         try {
-            // Fetch profile
             const { data: profileData, error: profileError } = await supabase
                 .from('profiles')
                 .select('id, display_name, avatar_url, bio, twitter_url, linkedin_url, website_url, github_url, created_at')
@@ -101,7 +99,6 @@ export default function AuthorProfilePage() {
                 return;
             }
 
-            // Fetch author profiles for all articles
             const authorIds = [...new Set(articlesData.map(a => a.author_id).filter(Boolean))];
             const profileMap = new Map<string, { display_name: string; avatar_url?: string }>();
 
@@ -121,7 +118,6 @@ export default function AuthorProfilePage() {
                 }
             }
 
-            // Fetch counts
             const articleIds = articlesData.map(a => a.id);
             const { data: commentsData } = await supabase
                 .from('comments')
@@ -147,7 +143,6 @@ export default function AuthorProfilePage() {
                 likesCountMap.set(like.article_id, count + 1);
             });
 
-            // Combine articles with author info
             const articlesWithAuthors: ArticleWithAuthor[] = articlesData.map(article => {
                 const authorProfile = profileMap.get(article.author_id);
                 return {
@@ -178,7 +173,6 @@ export default function AuthorProfilePage() {
                 .maybeSingle();
 
             if (error) {
-                // When no row, maybeSingle returns error 406 PGRST116
                 if (error.code !== 'PGRST116') {
                     console.error('Error fetching follow state:', error);
                 }

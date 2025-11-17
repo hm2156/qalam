@@ -1,5 +1,3 @@
-// app/explore/page.tsx (MINIMAL STYLE)
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,10 +6,6 @@ import Header from '../components/Header';
 import Link from 'next/link';
 import type { ArticleWithAuthor } from '@/types/articles';
 import { fetchArticlesWithAuthors } from './actions';
-
-// ---------------------------------------------------
-// Component: Article List Item
-// ---------------------------------------------------
 
 interface ArticleCardProps {
     article: ArticleWithAuthor;
@@ -34,7 +28,6 @@ const ArticleListItem = ({ article, availableTags }: ArticleCardProps) => {
     return (
         <Link href={`/article/${article.slug}`} className="block">
             <article className="py-6">
-                {/* top row: author + tag */}
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 text-sm">
                         {article.authorAvatar ? (
@@ -68,7 +61,6 @@ const ArticleListItem = ({ article, availableTags }: ArticleCardProps) => {
                     )}
                 </div>
 
-                {/* title */}
                 <h2 
                     className="text-2xl sm:text-3xl font-bold leading-snug tracking-tight text-black hover:text-gray-700 transition-colors"
                     style={{ fontFamily: 'var(--font-mirza), serif' }}
@@ -76,10 +68,8 @@ const ArticleListItem = ({ article, availableTags }: ArticleCardProps) => {
                     {article.title}
                 </h2>
 
-                {/* preview */}
                 {text && <p className="mt-2 text-[15px] leading-relaxed text-gray-600 line-clamp-3">{text}</p>}
 
-                {/* bottom meta (quiet) */}
                 <div className="mt-3 flex items-center gap-4 text-xs text-gray-500">
                     {article.reading_time && <span>{article.reading_time} دقيقة قراءة</span>}
                     <span>·</span>
@@ -102,9 +92,6 @@ const ArticleListItem = ({ article, availableTags }: ArticleCardProps) => {
     );
 };
 
-// ---------------------------------------------------
-// Component: TrendingTopics Sidebar
-// ---------------------------------------------------
 
 const TrendingTopics = ({ tags, selectedTag, onSelectTag }: { 
     tags: { value: string; label: string; icon?: React.ReactNode }[];
@@ -138,9 +125,6 @@ const TrendingTopics = ({ tags, selectedTag, onSelectTag }: {
         </aside>
     );
 
-// ---------------------------------------------------
-// Component: ExplorePage
-// ---------------------------------------------------
 
 export default function ExplorePage() {
     const router = useRouter();
@@ -290,7 +274,6 @@ export default function ExplorePage() {
       <Header />
             <main dir="rtl" className="mx-2 sm:mx-20 max-w-7xl mx-auto px-4 py-10">
                 
-                {/* Hero */}
                 <header className="mb-10 pb-6 border-b border-gray-200">
                     <h1 className="text-4xl font-bold mb-3 tracking-wider" style={{ fontFamily: 'var(--font-aref-ruqaa), serif', wordSpacing: '0.3em' }}>
                      العالم  كما  يُروى 
@@ -300,13 +283,10 @@ export default function ExplorePage() {
             </p>
                 </header>
 
-        {/* Two Column Layout */}
         <div className="lg:grid lg:grid-cols-12 lg:gap-12">
           
-          {/* Main Content Column */}
           <div className="lg:col-span-8">
             
-            {/* Mobile Tag Filter */}
                         <div className="mb-6 border-b border-gray-200 pb-4 lg:hidden">
                             <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide">
                                 {availableTags.map(tag => (
@@ -324,7 +304,6 @@ export default function ExplorePage() {
               </div>
             </div>
 
-            {/* Loading State */}
             {loading ? (
               <div className="text-center py-20">
                 <div className="inline-block w-12 h-12 border-4 border-gray-200 border-t-black rounded-full animate-spin mb-4"></div>
@@ -339,10 +318,8 @@ export default function ExplorePage() {
               </div>
             ) : (
               <div>
-                {/* Featured Article */}
                 {selectedTag === 'all' && featuredArticle && (
                                     <section aria-labelledby="featured-heading" className="mt-6 lg:mt-4 mb-10">
-                                        {/* Kicker row */}
                                         <div className="flex items-center gap-3 mb-4">
                                             <span
                                                 id="featured-heading"
@@ -353,13 +330,10 @@ export default function ExplorePage() {
                                             <div className="h-px flex-1 bg-gray-200" />
                                         </div>
 
-                                        {/* Full-width band */}
                                         <div className="-mx-4 bg-gray-50 border-y border-gray-200">
                                             <div className="mx-auto px-4 py-8">
-                                                {/* Featured item with larger type and longer preview */}
                                                 <Link href={`/article/${featuredArticle.slug}`} className="block">
                                                     <article>
-                                                        {/* author row (kept quiet) */}
                                                         <div className="flex items-center gap-2 mb-2 text-sm text-gray-600">
                                                             {featuredArticle.authorAvatar ? (
                                                                 <img src={featuredArticle.authorAvatar} alt={featuredArticle.authorName ?? 'كاتب'} className="w-7 h-7 rounded-full object-cover" />
@@ -382,7 +356,6 @@ export default function ExplorePage() {
                                                             <span>{new Date(featuredArticle.created_at).toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                                                         </div>
 
-                                                        {/* bigger title */}
                                                         <h2
                                                             className="text-3xl sm:text-4xl font-bold leading-snug tracking-tight text-black hover:text-gray-700 transition-colors"
                                                             style={{ fontFamily: 'var(--font-mirza), serif' }}
@@ -390,12 +363,10 @@ export default function ExplorePage() {
                                                             {featuredArticle.title}
                     </h2>
 
-                                                        {/* longer preview (4–5 lines) */}
                                                         <p className="mt-3 text-[15px] sm:text-base leading-relaxed text-gray-700 line-clamp-5">
                                                             {((featuredArticle.content ?? '').replace(/<[^>]*>/g, '').trim()).slice(0, 320)}…
                                                         </p>
 
-                                                        {/* quiet meta */}
                                                         <div className="mt-4 flex items-center gap-4 text-xs text-gray-500">
                                                             {featuredArticle.reading_time && <span>{featuredArticle.reading_time} دقيقة قراءة</span>}
                                                             <span>·</span>
@@ -420,10 +391,8 @@ export default function ExplorePage() {
                                     </section>
                 )}
                 
-                {/* Articles List */}
                   {selectedTag !== 'all' && (
                                     <section className="mt-6 lg:mt-4 mb-10">
-                                        {/* Kicker row */}
                                         <div className="flex items-center gap-3 mb-4">
                                             <span className="inline-flex items-center rounded-full bg-black text-white px-3 py-1 text-xs font-medium">
                       {availableTags.find(t => t.value === selectedTag)?.label}
@@ -441,7 +410,6 @@ export default function ExplorePage() {
             )}
           </div>
 
-          {/* Sidebar Column */}
           <div className="lg:col-span-4">
             <TrendingTopics 
               tags={availableTags} 
@@ -452,7 +420,6 @@ export default function ExplorePage() {
         </div>
       </main>
       
-      {/* Add custom scrollbar hiding for mobile tags */}
       <style jsx global>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none;

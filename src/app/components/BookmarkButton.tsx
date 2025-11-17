@@ -8,7 +8,6 @@ interface BookmarkButtonProps {
   userId: string | null;
 }
 
-// Bookmark icon components
 const BookmarkIconEmpty = () => (
   <svg
     width="20"
@@ -45,7 +44,6 @@ export default function BookmarkButton({ articleId, userId: initialUserId }: Boo
   const [checking, setChecking] = useState(true);
   const [userId, setUserId] = useState<string | null>(initialUserId || null);
 
-  // Fetch user ID on client side (more reliable than server-side)
   useEffect(() => {
     const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -53,7 +51,6 @@ export default function BookmarkButton({ articleId, userId: initialUserId }: Boo
     };
     fetchUser();
     
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUserId(session?.user?.id || null);
     });
@@ -61,7 +58,6 @@ export default function BookmarkButton({ articleId, userId: initialUserId }: Boo
     return () => subscription.unsubscribe();
   }, []);
 
-  // Check if article is already bookmarked
   useEffect(() => {
     const checkBookmark = async () => {
       if (!userId) {
@@ -92,7 +88,6 @@ export default function BookmarkButton({ articleId, userId: initialUserId }: Boo
     setLoading(true);
 
     if (isBookmarked) {
-      // Remove bookmark
       const { error } = await supabase
         .from('bookmarks')
         .delete()
@@ -106,7 +101,6 @@ export default function BookmarkButton({ articleId, userId: initialUserId }: Boo
         setIsBookmarked(false);
       }
     } else {
-      // Add bookmark
       const { error } = await supabase
         .from('bookmarks')
         .insert([{ user_id: userId, article_id: articleId }]);
